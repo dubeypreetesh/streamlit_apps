@@ -6,9 +6,14 @@ Created on 31-Jul-2024
 import sys
 import os
 from pathlib import Path
+
+_="""
 ROOT_DIR=Path(__file__).parent.parent
 os.chdir(ROOT_DIR)
 sys.path.append(ROOT_DIR)
+"""
+os.chdir("/mount/src/streamlit_apps")
+sys.path.append("/mount/src/streamlit_apps")
 
 import streamlit as st
 from utils import llm_utils
