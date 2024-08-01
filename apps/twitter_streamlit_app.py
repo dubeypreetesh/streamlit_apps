@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 ROOT_DIR=Path(__file__).parent.parent
 sys.path.append(ROOT_DIR)
+print(f"ROOT_DIR : {ROOT_DIR}")
+print(f"sys.path : {sys.path}")
 
 import streamlit as st
 from utils import llm_utils
