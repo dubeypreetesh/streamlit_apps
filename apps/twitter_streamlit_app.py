@@ -3,6 +3,11 @@ Created on 31-Jul-2024
 
 @author: ongraph
 '''
+import sys
+from pathlib import Path
+ROOT_DIR=Path(__file__).parent.parent
+sys.path.append(ROOT_DIR)
+
 import streamlit as st
 from utils import llm_utils
 from proxy import twitter_proxy
