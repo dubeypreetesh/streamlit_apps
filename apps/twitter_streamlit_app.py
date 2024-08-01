@@ -4,11 +4,11 @@ Created on 31-Jul-2024
 @author: ongraph
 '''
 import sys
+import os
 from pathlib import Path
 ROOT_DIR=Path(__file__).parent.parent
+os.chdir(ROOT_DIR)
 sys.path.append(ROOT_DIR)
-print(f"ROOT_DIR : {ROOT_DIR}")
-print(f"sys.path : {sys.path}")
 
 import streamlit as st
 from utils import llm_utils
