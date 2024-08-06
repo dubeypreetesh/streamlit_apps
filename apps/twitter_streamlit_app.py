@@ -29,10 +29,16 @@ def display_response_dialog(message, status_code):
     st.write(message)
     st.write(f"Status : {status_code}")
 
-def generate_tweet(tweet_idea, messages, openai_api_key):
+def generate_tweet(tweet_idea, messages, openai_api_key, tweet_form):
     # Generate Tweet Text
-    prompt = f"Craft a concise tweet to share [{tweet_idea}]. Be creative and engaging, ensuring that the tweet captivates the audience's attention and leaves a lasting impression."
-    messages_copy = []
+    #Please be strict to keep the generated text length within the 280 characters limit.
+    if tweet_form=="140 chars limit":
+        prompt = f"Craft a concise tweet to share [{tweet_idea}]. Be creative and engaging, ensuring that the tweet captivates the audience's attention and leaves a lasting impression. Please be strict to keep the generated text length within the 140 characters limit."
+    else:
+        prompt = f"Craft a detailed tweet to share [{tweet_idea}]. Be creative and engaging, providing more context and explanation ensuring that the tweet captivates the audience's attention and leaves a lasting impression. Feel free to go beyond single tweet limit."
+        
+    #Removing "image_url" key from each message to reduce number of tokens send to AI.
+    messages_copy = [{k: v for k, v in d.items() if k != "image_url"} for d in messages]
     messages_copy.extend(messages)
     messages_copy.append({"role": "system", "content": prompt})
     
@@ -55,7 +61,12 @@ def generate_tweet_image(tweet):
     return image_url            
 
 st.title("🦜🔗 Twitter App")
-generate_image = st.checkbox("Generate Image", key="generate_image")
+
+col1, col2 = st.columns(2)
+with col1:
+    generate_image = st.checkbox("Generate Image", key="generate_image")
+with col2:
+    tweet_form = st.radio("Select Tweet Form", ["140 chars limit", "no limit"], key="tweet_form")
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -78,7 +89,7 @@ if user_input := st.chat_input("What's your tweet idea?"):
     
     # Display assistant response in chat message container
     with st.chat_message("assistant"):        
-        stream = generate_tweet(user_input, st.session_state.messages, st.session_state.openai_api_key)
+        stream = generate_tweet(user_input, st.session_state.messages, st.session_state.openai_api_key, tweet_form)
         generated_tweet=st.write_stream(stream)
         generated_image_url=None
         if generate_image:
