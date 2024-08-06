@@ -118,7 +118,7 @@ with st.sidebar:
         st.warning("Please enter your OpenAI API key!", icon="⚠")
     with st.form("twitter_form"):
         st.write("Post this on X")
-        tweet = st.text_area(label="Tweet", max_chars=560, key="tweet", placeholder="Your tweet to be posted")
+        tweet = st.text_area(label="Tweet", key="tweet", placeholder="Your tweet to be posted")
         tweet_image_url = st.text_input(label="Tweet Image Url", key="tweet_image_url", placeholder="Image Url to be posted")
         twitter_api_key = st.text_input(label="Api Key", key="twitter_api_key", placeholder="X Developer Account Api Key")
         twitter_api_key_secret = st.text_input(label="Api Key Secret", key="twitter_api_key_secret", placeholder="X Developer Account Api Key Secret")
