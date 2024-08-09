@@ -5,6 +5,8 @@ Created on 31-Jul-2024
 '''
 import sys
 import os
+import sqlite3
+from pathlib import Path
 
 _="""
 ROOT_DIR=Path(__file__).parent.parent
@@ -16,13 +18,16 @@ Setting PYTHONPATH dynamically like above using ROOT_DIR is not working in strea
 below in two lines of code `os.chdir` and `sys.path.append`.
 Comment these two lines in local development mode.
 """
-os.chdir("/mount/src/streamlit_apps")
-sys.path.append("/mount/src/streamlit_apps")
+#os.chdir("/mount/src/streamlit_apps")
+#sys.path.append("/mount/src/streamlit_apps")
 
 import streamlit as st
 from utils import llm_utils
 from proxy import twitter_proxy
 from utils.meta_ai_client import MetaAIClient
+from datetime import datetime, timedelta, time
+import time
+import threading
 
 @st.dialog("Tweet Post Status")
 def display_response_dialog(message, status_code):
@@ -58,8 +63,85 @@ def generate_tweet_image(tweet):
             if media["type"] == "IMAGE":
                 image_url = media["url"]
                 break
-    return image_url            
+    return image_url
 
+def save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time):
+    ROOT_DIR=Path(__file__).parent.parent
+    db_path = os.path.join(ROOT_DIR, "databases", "twitter_app.db")
+    # Connect to a database (or create one if it doesn't exist)
+    connection = sqlite3.connect(db_path)
+    
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+    
+    # Create a table
+    cursor.execute('''CREATE TABLE IF NOT EXISTS tweets (id INTEGER PRIMARY KEY, tweet TEXT, tweet_image_url TEXT, twitter_api_key TEXT, twitter_api_key_secret TEXT, twitter_access_token TEXT, twitter_access_token_secret TEXT, schedule_date_time TEXT, status TEXT)''')
+    
+    #Insert Data
+    cursor.execute("""
+    INSERT INTO tweets (tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time, status) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time, 'PENDING'))
+    
+    # Commit the changes
+    connection.commit()
+    
+    # Close the connection
+    connection.close()
+    
+# Function to run the scheduler
+def scheduler():
+    while True:
+        current_time = datetime.now()
+        loop_end_time = current_time + timedelta(seconds = 1*60)
+        
+        ROOT_DIR=Path(__file__).parent.parent
+        db_path = os.path.join(ROOT_DIR, "databases", "twitter_app.db")
+        # Connect to a database (or create one if it doesn't exist)
+        connection = sqlite3.connect(db_path)
+        connection.row_factory = sqlite3.Row  # This allows row access by column name
+        
+        # Create a cursor object to interact with the database
+        cursor = connection.cursor()
+        
+        current_time_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        cursor.execute("""
+        SELECT * FROM tweets WHERE status = "PENDING" AND schedule_date_time <= ?
+        """, (current_time_str,))
+        rows = cursor.fetchall()
+                
+        for row in rows:
+            status = row["status"]
+            try:
+                twitter_poster = twitter_proxy.TwitterPoster(row["twitter_api_key"], row["twitter_api_key_secret"], row["twitter_access_token"], row["twitter_access_token_secret"])
+                message, status_code = twitter_poster.post_thread(tweet_text=row["tweet"], image_url=row["tweet_image_url"])
+                if status_code == 200:
+                    status = "SUCCESS"
+                else:
+                    status = "FAILED"
+            except Exception as e:
+                status = "FAILED"
+            
+            if status!="PENDING":
+                # Update the status to SUCCESS
+                cursor.execute("""
+                UPDATE tweets SET status = ? WHERE id = ?
+                """, (status, row["id"],))
+            if datetime.now() > loop_end_time:
+                break
+        
+        connection.commit()
+        connection.close()
+        
+        # Wait for 60 seconds before running the scheduler again
+        time.sleep(1*60)
+
+    
+# Start the scheduler in a separate thread
+scheduler_thread = threading.Thread(target=scheduler, daemon=True)
+scheduler_thread.start()
+
+#App Code Starts here
 st.title("🦜🔗 Twitter App")
 
 col1, col2 = st.columns(2)
@@ -106,11 +188,7 @@ if user_input := st.chat_input("What's your tweet idea?"):
     if generated_image_url:
         st.session_state.tweet_image_url = generated_image_url
     else:
-        st.session_state.tweet_image_url = None
-    #if generated_image_url:
-    #    st.session_state.image_url = generated_image_url
-    #    st.image(generated_image_url)
-    #st.write(st.session_state)
+        st.session_state.tweet_image_url = None    
         
 with st.sidebar:
     openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
@@ -124,9 +202,22 @@ with st.sidebar:
         twitter_api_key_secret = st.text_input(label="Api Key Secret", key="twitter_api_key_secret", placeholder="X Developer Account Api Key Secret")
         twitter_access_token = st.text_input(label="Access Token", key="twitter_access_token", placeholder="X Developer Account Access Token")
         twitter_access_token_secret = st.text_input(label="Access Token Secret", key="twitter_access_token_secret", placeholder="X Developer Account Access Token Secret")
+        
+        today_date = datetime.now().date()
+        date_after_seven_days=today_date + timedelta(days=7)
+        
+        schedule_date = st.date_input(label="Tweet Schedule Date", value=today_date, min_value=today_date, max_value=date_after_seven_days, 
+                                      key="schedule_date", format = "YYYY-MM-DD")
+        schedule_time = st.time_input(label="Tweet Schedule Time", value=None, key="schedule_time")
         # Every form must have a submit button.
-        post_tweet_submitted = st.form_submit_button("Post Tweet")
+        post_tweet_submitted = st.form_submit_button("Schedule Tweet")
         if post_tweet_submitted and openai_api_key.startswith("sk-"):
+            _="""
             twitter_poster = twitter_proxy.TwitterPoster(twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret)
             message, status_code = twitter_poster.post_thread(tweet_text=tweet, image_url=tweet_image_url)
-            display_response_dialog(message=message, status_code=status_code)            
+            """
+            schedule_date_time=datetime.combine(schedule_date, schedule_time)
+            save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time)
+            display_response_dialog(message="Tweet Scheduled Successfully", status_code=200)
+            
+                         
