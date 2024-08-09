@@ -7,6 +7,7 @@ import sys
 import os
 import sqlite3
 from pathlib import Path
+from streamlit.runtime.scriptrunner import add_script_run_ctx
 
 _="""
 ROOT_DIR=Path(__file__).parent.parent
@@ -139,6 +140,7 @@ def scheduler():
     
 # Start the scheduler in a separate thread
 scheduler_thread = threading.Thread(target=scheduler, daemon=True)
+add_script_run_ctx(scheduler_thread)
 scheduler_thread.start()
 
 #App Code Starts here
