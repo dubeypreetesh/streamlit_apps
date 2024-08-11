@@ -8,6 +8,7 @@ import os
 import sqlite3
 from pathlib import Path
 from streamlit.runtime.scriptrunner import add_script_run_ctx
+import requests
 
 _="""
 ROOT_DIR=Path(__file__).parent.parent
@@ -66,7 +67,26 @@ def generate_tweet_image(tweet):
                 break
     return image_url
 
-def save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time):
+def save_tweet_streamlit_connection(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time):
+    # Create the SQL connection to pets_db as specified in your secrets file.
+    conn = st.connection('twitter_app_db', type='sql')
+    
+    with conn.session as s:
+        # Create a table
+        s.execute("""CREATE TABLE IF NOT EXISTS tweets (id INTEGER PRIMARY KEY, tweet TEXT, tweet_image_url TEXT, twitter_api_key TEXT, twitter_api_key_secret TEXT, twitter_access_token TEXT, twitter_access_token_secret TEXT, schedule_date_time TEXT, status TEXT);""")
+        s.execute(
+            """INSERT INTO tweets (tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time, status) 
+            VALUES (:tweet, :tweet_image_url, :twitter_api_key, :twitter_api_key_secret, :twitter_access_token, :twitter_access_token_secret, :schedule_date_time, :status);""",
+            params=dict(tweet=tweet, tweet_image_url=tweet_image_url, twitter_api_key=twitter_api_key, twitter_api_key_secret=twitter_api_key_secret, twitter_access_token=twitter_access_token, twitter_access_token_secret=twitter_access_token_secret, schedule_date_time=schedule_date_time, status='PENDING')
+        )
+        s.commit()
+        
+    # Query and display the data you inserted
+    tweets = conn.query('select * from tweets')
+    st.dataframe(tweets)
+
+
+def save_tweet_old(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time):
     ROOT_DIR=Path(__file__).parent.parent
     db_path = os.path.join(ROOT_DIR, "databases", "twitter_app.db")
     # Connect to a database (or create one if it doesn't exist)
@@ -89,6 +109,19 @@ def save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, 
     
     # Close the connection
     connection.close()
+    
+def save_tweet(tweet, image_url, api_key, api_key_secret, access_token, access_token_secret, schedule_date_time):
+    url = "http://copilot.heymira.ai/twitter/save"
+    payload = {
+                "tweet": tweet,
+                "image_url": image_url,
+                "api_key": api_key,
+                "api_key_secret": api_key_secret,
+                "access_token": access_token,
+                "access_token_secret": access_token_secret,
+                "schedule_date_time":schedule_date_time
+            }        
+    return requests.post(url=url, json=payload)
     
 # Function to run the scheduler
 def scheduler():
@@ -137,12 +170,11 @@ def scheduler():
         
         # Wait for 60 seconds before running the scheduler again
         time.sleep(1*60)
-
-    
+        
 # Start the scheduler in a separate thread
-scheduler_thread = threading.Thread(target=scheduler, daemon=True)
+#scheduler_thread = threading.Thread(target=scheduler, daemon=True)
 #add_script_run_ctx(scheduler_thread)
-scheduler_thread.start()
+#scheduler_thread.start()
 
 #App Code Starts here
 st.title("🦜🔗 Twitter App")
