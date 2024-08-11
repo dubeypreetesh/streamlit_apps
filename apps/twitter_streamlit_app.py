@@ -93,6 +93,7 @@ def save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, 
 # Function to run the scheduler
 def scheduler():
     while True:
+        print("===scheduler is running")
         current_time = datetime.now()
         loop_end_time = current_time + timedelta(seconds = 1*60)
         
@@ -140,7 +141,7 @@ def scheduler():
     
 # Start the scheduler in a separate thread
 scheduler_thread = threading.Thread(target=scheduler, daemon=True)
-add_script_run_ctx(scheduler_thread)
+#add_script_run_ctx(scheduler_thread)
 scheduler_thread.start()
 
 #App Code Starts here
