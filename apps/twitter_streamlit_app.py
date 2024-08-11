@@ -252,7 +252,8 @@ with st.sidebar:
             message, status_code = twitter_poster.post_thread(tweet_text=tweet, image_url=tweet_image_url)
             """
             schedule_date_time=datetime.combine(schedule_date, schedule_time)
-            save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time)
+            schedule_date_time_str = schedule_date_time.strftime('%Y-%m-%d %H:%M:%S')
+            save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time_str)
             display_response_dialog(message="Tweet Scheduled Successfully", status_code=200)
             
                          
