@@ -9,6 +9,9 @@ import sqlite3
 from pathlib import Path
 from streamlit.runtime.scriptrunner import add_script_run_ctx
 import requests
+from dotenv import load_dotenv, find_dotenv
+
+_ = load_dotenv(find_dotenv())  # read local .env file
 
 _="""
 ROOT_DIR=Path(__file__).parent.parent
@@ -20,8 +23,8 @@ Setting PYTHONPATH dynamically like above using ROOT_DIR is not working in strea
 below in two lines of code `os.chdir` and `sys.path.append`.
 Comment these two lines in local development mode.
 """
-os.chdir("/mount/src/streamlit_apps")
-sys.path.append("/mount/src/streamlit_apps")
+#os.chdir("/mount/src/streamlit_apps")
+#sys.path.append("/mount/src/streamlit_apps")
 
 import streamlit as st
 from utils import llm_utils
@@ -54,7 +57,7 @@ def generate_tweet(tweet_idea, messages, openai_api_key, tweet_form):
     #return tweet_idea
     
 def generate_tweet_image(tweet):
-    meta_ai = MetaAIClient.get_instance(fb_email="preetesh@mall91.com", fb_password="h@b1t_netw0rk")
+    meta_ai = MetaAIClient.get_instance(fb_email=os.environ["META_AI_FB_USERNAME"], fb_password=os.environ["META_AI_FB_PASSWORD"])
     prompt=f"Create a vibrant, engaging image for the following tweet: [{tweet}]. Use eye-catching colors, creative typography, and a clean layout. Format the image for Twitter (1200x675 pixels, JPEG or PNG)."
     resp = meta_ai.prompt(message=prompt)
     print(resp)
@@ -110,8 +113,8 @@ def save_tweet_old(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secr
     # Close the connection
     connection.close()
     
-def save_tweet(tweet, image_url, api_key, api_key_secret, access_token, access_token_secret, schedule_date_time):
-    url = "http://copilot.heymira.ai/twitter/save"
+def save_tweet(tweet, image_url, api_key, api_key_secret, access_token, access_token_secret, schedule_date_time, status):
+    url = os.environ["SAVE_TWEET_URL"]
     payload = {
                 "tweet": tweet,
                 "image_url": image_url,
@@ -119,7 +122,8 @@ def save_tweet(tweet, image_url, api_key, api_key_secret, access_token, access_t
                 "api_key_secret": api_key_secret,
                 "access_token": access_token,
                 "access_token_secret": access_token_secret,
-                "schedule_date_time":schedule_date_time
+                "schedule_date_time":schedule_date_time,
+                "status": status
             }        
     return requests.post(url=url, json=payload)
     
@@ -253,7 +257,7 @@ with st.sidebar:
             """
             schedule_date_time=datetime.combine(schedule_date, schedule_time)
             schedule_date_time_str = schedule_date_time.strftime('%Y-%m-%d %H:%M:%S')
-            save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time_str)
+            save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time_str, "PENDING")
             display_response_dialog(message="Tweet Scheduled Successfully", status_code=200)
             
                          
