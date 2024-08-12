@@ -191,7 +191,9 @@ st.title("🦜🔗 Twitter App")
 
 col1, col2 = st.columns(2)
 with col1:
-    generate_image = st.checkbox("Generate Image", key="generate_image")
+    st.caption(":blue[_[Generate Image]_] :blue[Coming Soon] :sunglasses:")
+    generate_image = False
+    #generate_image = st.checkbox("Generate Image", key="generate_image")
 with col2:
     tweet_form = st.radio("Select Tweet Form", ["140 chars limit", "no limit"], key="tweet_form")
 
