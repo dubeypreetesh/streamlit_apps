@@ -57,7 +57,7 @@ def generate_tweet(tweet_idea, messages, openai_api_key, tweet_form):
     #return tweet_idea
     
 def generate_tweet_image(tweet):
-    meta_ai = MetaAIClient.get_instance(fb_email=os.environ["META_AI_FB_USERNAME"], fb_password=os.environ["META_AI_FB_PASSWORD"])
+    meta_ai = MetaAIClient.get_instance(fb_email=st.secrets["meta_ai_credentials"]["fb_username"], fb_password=st.secrets["meta_ai_credentials"]["fb_password"])
     prompt=f"Create a vibrant, engaging image for the following tweet: [{tweet}]. Use eye-catching colors, creative typography, and a clean layout. Format the image for Twitter (1200x675 pixels, JPEG or PNG)."
     resp = meta_ai.prompt(message=prompt)
     print(resp)
@@ -114,7 +114,7 @@ def save_tweet_old(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secr
     connection.close()
     
 def save_tweet(tweet, image_url, api_key, api_key_secret, access_token, access_token_secret, schedule_date_time, status):
-    url = os.environ["SAVE_TWEET_URL"]
+    url = st.secrets["save_tweet_url"]
     payload = {
                 "tweet": tweet,
                 "image_url": image_url,
