@@ -143,6 +143,12 @@ def scheduler():
         # Create a cursor object to interact with the database
         cursor = connection.cursor()
         
+        #Delete tweets which has been posted successfully 7 days back
+        date_before_seven_days=current_time.date() - timedelta(days=7)
+        cursor.execute("""
+        DELETE * FROM tweets WHERE status = "SUCCESS" AND schedule_date_time <= ?
+        """, (date_before_seven_days,))
+        
         current_time_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
         cursor.execute("""
         SELECT * FROM tweets WHERE status = "PENDING" AND schedule_date_time <= ?
