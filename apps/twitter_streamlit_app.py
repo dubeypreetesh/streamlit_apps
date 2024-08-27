@@ -49,7 +49,6 @@ def generate_tweet(tweet_idea, messages, openai_api_key, tweet_form):
         
     #Removing "image_url" key from each message to reduce number of tokens send to AI.
     messages_copy = [{k: v for k, v in d.items() if k != "image_url"} for d in messages]
-    messages_copy.extend(messages)
     messages_copy.append({"role": "system", "content": prompt})
     
     tweet_stream = llm_utils.get_completion_stream(prompt=prompt, temperature=0.0, messages=messages_copy, openai_api_key=openai_api_key)
