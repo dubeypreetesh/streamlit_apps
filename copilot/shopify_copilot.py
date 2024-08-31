@@ -19,8 +19,9 @@ Setting PYTHONPATH dynamically like above using ROOT_DIR is not working in strea
 below in two lines of code `os.chdir` and `sys.path.append`.
 Comment these two lines in local development mode.
 """
-os.chdir("/mount/src/streamlit_apps")
-sys.path.append("/mount/src/streamlit_apps")
+#os.chdir("/mount/src/streamlit_apps")
+#sys.path.append("/mount/src/streamlit_apps")
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
