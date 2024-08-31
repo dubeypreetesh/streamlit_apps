@@ -3,6 +3,25 @@ Created on 12 Jun 2024
 
 @author: dileep sharma
 '''
+import os
+import sys
+from dotenv import load_dotenv, find_dotenv
+
+_ = load_dotenv(find_dotenv())  # read local .env file
+
+_="""
+ROOT_DIR=Path(__file__).parent.parent
+os.chdir(ROOT_DIR)
+sys.path.append(ROOT_DIR)
+
+Note ::
+Setting PYTHONPATH dynamically like above using ROOT_DIR is not working in streamlit cloud, so path is hardcoded as 
+below in two lines of code `os.chdir` and `sys.path.append`.
+Comment these two lines in local development mode.
+"""
+os.chdir("/mount/src/streamlit_apps")
+sys.path.append("/mount/src/streamlit_apps")
+
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.prompts.chat import ChatPromptTemplate
@@ -14,12 +33,11 @@ from chromadb import DEFAULT_TENANT
 from utils.chroma_client import ChromaClient
 import jwt
 
-JWT_SECRET="SDfew97etG8Y324t"
-def fetch_result(token: str, question:str, openai_api_key: str, messages: list):
-    decoded_token = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+#JWT_SECRET=st.secrets["shopify_credentials"]["jwt_secret"]
+def fetch_result(token: str, token_secret: str, question:str, openai_api_key: str, messages: list):    
+    decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
     request_data={"question": question, "shop_id": decoded_token["shopId"], "user_id": decoded_token["customerId"], 
                   "collection_name": decoded_token["collection_name"], "messages": messages, "openai_api_key": openai_api_key}
-    print(f"request_data : {request_data}")
     answer = shopify_result(request_data=request_data)
     return answer
 

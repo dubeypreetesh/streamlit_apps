@@ -43,10 +43,7 @@ def send_chat_messages(token: str, user_input: str, ai_message: str):
     return requests.post(url=url, headers=headers, json=payload)
 
 def create_chat_messages(response: dict):
-    print("resonse : {response}")
     messages = response["data"]
-    print(f"length : {len(messages)}")
-    print(f"messages : {messages}")
     messages_copy = []
     for message in messages:
         role = None
@@ -68,7 +65,6 @@ def create_placeholder_messages(messages: list):
             role = "ai"
         if message["content"]:
             messages_copy.append((role, message["content"]))
-    print(f"messages_copy : {messages_copy}")
     return messages_copy
 
 #App Code Starts here
@@ -103,7 +99,7 @@ if user_input := st.chat_input("What's your query?"):
         
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            ai_message = shopify_copilot.fetch_result(token=token, question=user_input, openai_api_key=openai_api_key, messages=create_placeholder_messages(st.session_state.messages))
+            ai_message = shopify_copilot.fetch_result(token=token, token_secret=st.secrets["shopify_credentials"]["jwt_secret"] ,question=user_input, openai_api_key=openai_api_key, messages=create_placeholder_messages(st.session_state.messages))
             st.markdown(ai_message)
         
         # Add assistant response to chat history
