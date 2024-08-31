@@ -106,6 +106,7 @@ PyPika==0.48.9
 pyppeteer==2.0.0
 pyproject_hooks==1.1.0
 pyquery==2.0.0
+pysqlite3-binary==0.5.3.post1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 pytz==2024.1
