@@ -3,25 +3,6 @@ Created on 12 Jun 2024
 
 @author: dileep sharma
 '''
-import os
-import sys
-from dotenv import load_dotenv, find_dotenv
-
-_ = load_dotenv(find_dotenv())  # read local .env file
-
-_="""
-ROOT_DIR=Path(__file__).parent.parent
-os.chdir(ROOT_DIR)
-sys.path.append(ROOT_DIR)
-
-Note ::
-Setting PYTHONPATH dynamically like above using ROOT_DIR is not working in streamlit cloud, so path is hardcoded as 
-below in two lines of code `os.chdir` and `sys.path.append`.
-Comment these two lines in local development mode.
-"""
-os.chdir("/mount/src/streamlit_apps")
-sys.path.append("/mount/src/streamlit_apps")
-
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.prompts.chat import ChatPromptTemplate

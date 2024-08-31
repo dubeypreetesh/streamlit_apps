@@ -3,9 +3,27 @@ Created on 29-Aug-2024
 
 @author: ongraph
 '''
+import os
+import sys
+from dotenv import load_dotenv, find_dotenv
+
+_ = load_dotenv(find_dotenv())  # read local .env file
+
+_="""
+ROOT_DIR=Path(__file__).parent.parent
+os.chdir(ROOT_DIR)
+sys.path.append(ROOT_DIR)
+
+Note ::
+Setting PYTHONPATH dynamically like above using ROOT_DIR is not working in streamlit cloud, so path is hardcoded as 
+below in two lines of code `os.chdir` and `sys.path.append`.
+Comment these two lines in local development mode.
+"""
+os.chdir("/mount/src/streamlit_apps")
+sys.path.append("/mount/src/streamlit_apps")
+
 import requests
 import streamlit as st
-from utils import llm_utils
 from copilot import shopify_copilot
 # URL for your API endpoints
 CHAT_HISTORY_API = "https://app.heymira.ai/api/conversation" #GET
