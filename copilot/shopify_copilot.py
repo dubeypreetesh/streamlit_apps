@@ -3,6 +3,11 @@ Created on 12 Jun 2024
 
 @author: dileep sharma
 '''
+# these three lines swap the stdlib sqlite3 lib with the pysqlite3 package
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.prompts.chat import ChatPromptTemplate
