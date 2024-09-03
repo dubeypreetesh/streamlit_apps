@@ -102,7 +102,6 @@ token = query_params.get('token')
 token_secret = st.secrets["shopify_credentials"]["jwt_secret"]
 decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
 page_title = f"I am Mira - you personal 24/7 Shopping Assistant for {decoded_token['shopId']}"
-decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
 st.set_page_config(page_title=page_title, page_icon=":flag-in:")
 st.title("🔗 Shopify App")
 
