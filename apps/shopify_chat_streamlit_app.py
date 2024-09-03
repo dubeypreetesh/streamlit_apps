@@ -6,6 +6,7 @@ Created on 29-Aug-2024
 import os
 import sys
 from dotenv import load_dotenv, find_dotenv
+import socket
 
 _ = load_dotenv(find_dotenv())  # read local .env file
 
@@ -19,8 +20,13 @@ Setting PYTHONPATH dynamically like above using ROOT_DIR is not working in strea
 below in two lines of code `os.chdir` and `sys.path.append`.
 Comment these two lines in local development mode.
 """
-os.chdir("/mount/src/streamlit_apps")
-sys.path.append("/mount/src/streamlit_apps")
+
+host_name = socket.gethostname()
+print(f"host_name {host_name}")
+
+if host_name.endswith(".streamlit.app"):
+    os.chdir("/mount/src/streamlit_apps")
+    sys.path.append("/mount/src/streamlit_apps")
 
 import requests
 import streamlit as st
@@ -101,11 +107,14 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-        
-with st.sidebar:
-    openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
-    if not openai_api_key.startswith("sk-"):
-        st.warning("Please enter your OpenAI API key!", icon="⚠")        
+
+if host_name.endswith(".streamlit.app"):        
+    with st.sidebar:
+        openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
+        if not openai_api_key.startswith("sk-"):
+            st.warning("Please enter your OpenAI API key!", icon="⚠")
+else:
+    openai_api_key = st.secrets["openai"]["api_key"]
 
 if user_input := st.chat_input("What's your query?"):
     if openai_api_key.startswith("sk-"):
