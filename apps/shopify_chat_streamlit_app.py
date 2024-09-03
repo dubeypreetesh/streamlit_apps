@@ -7,6 +7,7 @@ import os
 import sys
 from dotenv import load_dotenv, find_dotenv
 import socket
+import jwt
 
 _ = load_dotenv(find_dotenv())  # read local .env file
 
@@ -92,12 +93,18 @@ def create_placeholder_messages(messages: list):
     return messages_copy
 
 #App Code Starts here
-st.title("🔗 Shopify App")
 # Fetch the query parameters
 query_params = st.query_params
 
 # Access a specific query parameter
 token = query_params.get('token')
+
+token_secret = st.secrets["shopify_credentials"]["jwt_secret"]
+decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
+page_title = f"I am Mira - you personal 24/7 Shopping Assistant for {decoded_token['shopId']}"
+decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
+st.set_page_config(page_title=page_title, page_icon=":flag-in:")
+st.title("🔗 Shopify App")
 
 # Initialize chat history
 if "messages" not in st.session_state:
