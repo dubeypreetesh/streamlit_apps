@@ -24,9 +24,9 @@ below in two lines of code `os.chdir` and `sys.path.append`.
 Comment these two lines in local development mode.
 """
 is_cloud = os.getenv('STREAMLIT_ENV') == 'cloud'
-if is_cloud:
-    os.chdir("/mount/src/streamlit_apps")
-    sys.path.append("/mount/src/streamlit_apps")
+#if is_cloud:
+os.chdir("/mount/src/streamlit_apps")
+sys.path.append("/mount/src/streamlit_apps")
 
 import streamlit as st
 from utils import llm_utils
@@ -189,7 +189,8 @@ def scheduler():
 
 #App Code Starts here
 st.title("🦜🔗 Twitter App")
-
+st.title(f"is_cloud : {is_cloud}")
+st.title(f"os.getenv('STREAMLIT_ENV') : {os.getenv('STREAMLIT_ENV')}")
 col1, col2 = st.columns(2)
 with col1:
     st.caption(":blue[_[Generate Image]_] :blue[Coming Soon] :sunglasses:")
