@@ -6,7 +6,6 @@ Created on 29-Aug-2024
 import os
 import sys
 from dotenv import load_dotenv, find_dotenv
-import socket
 import jwt
 
 _ = load_dotenv(find_dotenv())  # read local .env file
@@ -21,11 +20,8 @@ Setting PYTHONPATH dynamically like above using ROOT_DIR is not working in strea
 below in two lines of code `os.chdir` and `sys.path.append`.
 Comment these two lines in local development mode.
 """
-
-host_name = socket.gethostname()
-print(f"host_name {host_name}")
-
-if host_name.endswith(".streamlit.app"):
+is_cloud = os.getenv('STREAMLIT_ENV') == 'cloud'
+if is_cloud:
     os.chdir("/mount/src/streamlit_apps")
     sys.path.append("/mount/src/streamlit_apps")
 
@@ -114,7 +110,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if host_name.endswith(".streamlit.app"):        
+if is_cloud:        
     with st.sidebar:
         openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
         if not openai_api_key.startswith("sk-"):
