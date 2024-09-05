@@ -189,8 +189,6 @@ def scheduler():
 
 #App Code Starts here
 st.title("🦜🔗 Twitter App")
-st.title(f"is_cloud : {is_cloud}")
-st.title(f"os.getenv('HOME') : {os.getenv('HOME')}")
 col1, col2 = st.columns(2)
 with col1:
     st.caption(":blue[_[Generate Image]_] :blue[Coming Soon] :sunglasses:")
