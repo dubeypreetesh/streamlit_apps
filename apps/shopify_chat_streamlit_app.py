@@ -20,7 +20,7 @@ Setting PYTHONPATH dynamically like above using ROOT_DIR is not working in strea
 below in two lines of code `os.chdir` and `sys.path.append`.
 Comment these two lines in local development mode.
 """
-is_cloud = os.getenv('STREAMLIT_ENV') == 'cloud'
+is_cloud = os.getenv('HOME') == "/home/appuser"
 if is_cloud:
     os.chdir("/mount/src/streamlit_apps")
     sys.path.append("/mount/src/streamlit_apps")
