@@ -21,9 +21,9 @@ below in two lines of code `os.chdir` and `sys.path.append`.
 Comment these two lines in local development mode.
 """
 is_cloud = os.getenv('HOME') == "/home/appuser"
-#if is_cloud:
-os.chdir("/mount/src/streamlit_apps")
-sys.path.append("/mount/src/streamlit_apps")
+if is_cloud:
+    os.chdir("/mount/src/streamlit_apps")
+    sys.path.append("/mount/src/streamlit_apps")
 
 import requests
 import streamlit as st
@@ -100,7 +100,6 @@ decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
 page_title = f"I am Mira - you personal 24/7 Shopping Assistant for {decoded_token['shopId']}"
 st.set_page_config(page_title=page_title, page_icon=":flag-in:")
 st.title("🔗 Shopify App")
-st.title(f"os.getenv('HOME') : {os.getenv('HOME')}")
 # Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = create_chat_messages(fetch_chat_history(token=token).json())
