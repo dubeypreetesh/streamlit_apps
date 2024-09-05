@@ -28,23 +28,16 @@ if is_cloud:
 import requests
 import streamlit as st
 from copilot import shopify_copilot
-# URL for your API endpoints
-CHAT_HISTORY_API = "https://app.heymira.ai/api/conversation" #GET
-SEND_MESSAGE_API = "https://app.heymira.ai/api/conversation" #POST
 
-def fetch_chat_history(token: str):
+def fetch_chat_history(api_url: str, token: str):
     # Fetch the chat history from your API
-    url = CHAT_HISTORY_API
     headers = {
             "Authorization": f"Bearer {token}"
         }        
-    return requests.get(url=url, headers=headers)
+    return requests.get(url=api_url, headers=headers)
 
-def send_chat_messages(token: str, user_input: str, ai_message: str):
+def send_chat_messages(api_url: str, token: str, user_input: str, ai_message: str):
     # Send the user message to your API and get the bot response
-    #response = requests.post(SEND_MESSAGE_API, json={"user_id": user_id, "message": message})
-    #return response.json() if response.status_code == 200 else {"response": "Error: Unable to get response."}
-    url = SEND_MESSAGE_API
     headers = {
             "Authorization": f"Bearer {token}"
         }
@@ -61,7 +54,7 @@ def send_chat_messages(token: str, user_input: str, ai_message: str):
             }
         ]
     }      
-    return requests.post(url=url, headers=headers, json=payload)
+    return requests.post(url=api_url, headers=headers, json=payload)
 
 def create_chat_messages(response: dict):
     messages = response["data"]
@@ -102,7 +95,7 @@ st.set_page_config(page_title=page_title, page_icon=":flag-in:")
 st.title("🔗 Shopify App")
 # Initialize chat history
 if "messages" not in st.session_state:
-    st.session_state.messages = create_chat_messages(fetch_chat_history(token=token).json())
+    st.session_state.messages = create_chat_messages(fetch_chat_history(api_url=st.secrets["shopify_credentials"]["chat_history_api"], token=token).json())
     
 # Display chat messages from history on app rerun  
 for message in st.session_state.messages:
@@ -135,7 +128,7 @@ if user_input := st.chat_input("What's your query?"):
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": ai_message})    
         try:
-            send_chat_messages(token=token, user_input=user_input, ai_message=ai_message)
+            send_chat_messages(api_url=st.secrets["shopify_credentials"]["send_message_api"], token=token, user_input=user_input, ai_message=ai_message)
         except Exception as e:
             pass
         
