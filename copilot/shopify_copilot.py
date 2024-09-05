@@ -20,17 +20,18 @@ from utils.chroma_client import ChromaClient
 import jwt
 
 #JWT_SECRET=st.secrets["shopify_credentials"]["jwt_secret"]
-def fetch_result(token: str, token_secret: str, question:str, openai_api_key: str, messages: list):    
+def fetch_result(token: str, token_secret: str, question:str, openai_api_key: str, messages: list, chroma_host:str, chroma_port: int):    
     decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
     request_data={"question": question, "shop_id": decoded_token["shopId"], "user_id": decoded_token["customerId"], 
-                  "collection_name": decoded_token["collection_name"], "messages": messages, "openai_api_key": openai_api_key}
+                  "collection_name": decoded_token["collection_name"], "messages": messages, "openai_api_key": openai_api_key, 
+                  "chroma_host": chroma_host, "chroma_port": chroma_port}
     answer = shopify_result(request_data=request_data)
     return answer
 
-def get_shopify_chroma_instance(database: str):
+def get_shopify_chroma_instance(database: str, host: str, port: int):
     CHROMA_API_IMPL="chromadb.api.fastapi.FastAPI"
-    HOST="copilot.heymira.ai"
-    PORT=8000
+    HOST=host
+    PORT=port
     TENANT=DEFAULT_TENANT
     DATABASE=database
     
@@ -42,9 +43,12 @@ def shopify_result(request_data):
     collection_name = request_data["collection_name"]
     openai_api_key= request_data["openai_api_key"]
     
+    chroma_host= request_data["chroma_host"]
+    chroma_port= request_data["chroma_port"]
+    
     llm = llm_utils.get_chat_model(False, False, openai_api_key=openai_api_key)
     
-    client = get_shopify_chroma_instance(database=shop_id)
+    client = get_shopify_chroma_instance(database=shop_id, host=chroma_host, port=chroma_port)
     embedding_function = OpenAIEmbeddings(openai_api_key=openai_api_key)
     vectorstore = Chroma(client=client, collection_name=collection_name, embedding_function=embedding_function)
     
