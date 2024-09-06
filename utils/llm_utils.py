@@ -4,6 +4,8 @@ from langchain.schema import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 import openai
 
+from langsmith.wrappers import wrap_openai
+
 def get_llm_model():
     llm_model = "gpt-3.5-turbo"
     return llm_model
@@ -52,4 +54,6 @@ def get_chat_model(model_name, temperature, openai_api_key):
         model_name = get_llm_model()
     if not temperature:
         temperature = 0    
-    return ChatOpenAI(model=model_name, temperature=temperature, api_key=openai_api_key)
+    chat_open_ai_client = ChatOpenAI(model=model_name, temperature=temperature, api_key=openai_api_key)
+    langsmith_chat_open_ai_client = wrap_openai(chat_open_ai_client)
+    return langsmith_chat_open_ai_client

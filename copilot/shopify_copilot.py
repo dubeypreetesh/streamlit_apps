@@ -4,6 +4,7 @@ Created on 12 Jun 2024
 @author: dileep sharma
 '''
 # these three lines swap the stdlib sqlite3 lib with the pysqlite3 package
+from langsmith.run_helpers import traceable
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
@@ -37,6 +38,7 @@ def get_shopify_chroma_instance(database: str, host: str, port: int):
     
     return ChromaClient.get_instance(chroma_api_impl=CHROMA_API_IMPL, host=HOST, port=PORT, tenant=TENANT, database=DATABASE)
 
+@traceable # Auto-trace this function
 def shopify_result(request_data):
     question = request_data["question"]
     shop_id = request_data["shop_id"]

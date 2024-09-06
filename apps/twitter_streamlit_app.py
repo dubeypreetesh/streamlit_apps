@@ -10,6 +10,7 @@ from pathlib import Path
 from streamlit.runtime.scriptrunner import add_script_run_ctx
 import requests
 from dotenv import load_dotenv, find_dotenv
+import streamlit as st
 
 _ = load_dotenv(find_dotenv())  # read local .env file
 
@@ -27,8 +28,10 @@ is_cloud = os.getenv('HOME') == "/home/appuser"
 if is_cloud:
     os.chdir("/mount/src/streamlit_apps")
     sys.path.append("/mount/src/streamlit_apps")
+    # Setting environment variables from Streamlit secrets
+    os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["langsmith"]["LANGCHAIN_TRACING_V2"]
+    os.environ["LANGCHAIN_API_KEY"] = st.secrets["langsmith"]["LANGCHAIN_API_KEY"]
 
-import streamlit as st
 from utils import llm_utils
 from proxy import twitter_proxy
 from utils.meta_ai_client import MetaAIClient

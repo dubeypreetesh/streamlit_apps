@@ -7,6 +7,7 @@ import os
 import sys
 from dotenv import load_dotenv, find_dotenv
 import jwt
+import streamlit as st
 
 _ = load_dotenv(find_dotenv())  # read local .env file
 
@@ -24,9 +25,11 @@ is_cloud = os.getenv('HOME') == "/home/appuser"
 if is_cloud:
     os.chdir("/mount/src/streamlit_apps")
     sys.path.append("/mount/src/streamlit_apps")
+    # Setting environment variables from Streamlit secrets
+    os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["langsmith"]["LANGCHAIN_TRACING_V2"]
+    os.environ["LANGCHAIN_API_KEY"] = st.secrets["langsmith"]["LANGCHAIN_API_KEY"]
 
 import requests
-import streamlit as st
 from copilot import shopify_copilot
 
 def fetch_chat_history(api_url: str, token: str):
