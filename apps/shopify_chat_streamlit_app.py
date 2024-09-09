@@ -85,6 +85,15 @@ def create_placeholder_messages(messages: list):
     return messages_copy
 
 #App Code Starts here
+hide_streamlit_style = """
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+</style>
+
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 # Fetch the query parameters
 query_params = st.query_params
 
