@@ -6,10 +6,7 @@ Created on 09-Sep-2024
 
 import os
 import sys
-
 from dotenv import load_dotenv, find_dotenv
-
-from copilot import shopify_copilot
 import streamlit as st
 
 
@@ -33,7 +30,8 @@ if is_cloud:
     os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["langsmith"]["LANGCHAIN_TRACING_V2"]
     os.environ["LANGCHAIN_API_KEY"] = st.secrets["langsmith"]["LANGCHAIN_API_KEY"]
 
-    
+from copilot import shopify_copilot
+   
 def create_placeholder_messages(messages: list):
     messages_copy = []
     for message in messages:
