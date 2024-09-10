@@ -55,5 +55,6 @@ def get_chat_model(model_name, temperature, openai_api_key):
     if not temperature:
         temperature = 0    
     chat_open_ai_client = ChatOpenAI(model=model_name, temperature=temperature, api_key=openai_api_key)
-    langsmith_chat_open_ai_client = wrap_openai(chat_open_ai_client)
-    return langsmith_chat_open_ai_client
+    return chat_open_ai_client
+    #langsmith_chat_open_ai_client = wrap_openai(chat_open_ai_client)
+    #return langsmith_chat_open_ai_client
