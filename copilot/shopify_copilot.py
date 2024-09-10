@@ -172,7 +172,7 @@ def website_result(request_data):
     
     Context:{context}
     
-    Use the above Context and Key instructions and Response Guidelines to provide accurate and helpful responses to user queries.
+    Use the above Context and Key instructions to provide accurate and helpful responses to user queries.
     """
     
     """
