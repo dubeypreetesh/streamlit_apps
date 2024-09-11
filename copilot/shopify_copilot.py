@@ -186,7 +186,7 @@ def website_result(request_data):
     
     prompt = ChatPromptTemplate([
             ("system", system_prompt),
-            *request_data["messages"],
+            *request_data["messages"][-6:],
             ("human", "{input}")
         ])
     
