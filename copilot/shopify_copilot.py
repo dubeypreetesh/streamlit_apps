@@ -154,7 +154,6 @@ def website_result(request_data):
     vectorstore = Chroma(client=client, collection_name=collection_name, embedding_function=embedding_function)
     
     retriever = vectorstore.as_retriever()
-    retriever.search_kwargs = {"fetch_k": 5}
        
     system_prompt = """
     You are a chat assistant for a website. Your role is to assist users by answering their queries based on the content and information 
