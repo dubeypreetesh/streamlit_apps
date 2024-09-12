@@ -168,7 +168,7 @@ def website_result(request_data):
     5. Keep answers relevant to the specific business domain of the website (e.g., commerce, services, gaming).
     6. Use any technical terms or jargon appropriately, ensuring clarity for both technical and non-technical users.
     7. Be mindful of the website's purpose: to offer expertise, products, or services related to its specific domain.
-    8. Include links to relevant website pages in your responses whenever appropriate, based on the user query. The links can be found in the metadata fields of Chroma documents, specifically the source and loc fields, which contain the page link URLs. Use these fields to determine the correct page link based on the user query.
+    8. Include links to relevant website pages in your responses whenever appropriate, based on the user query. Present the links in your response only if clear `url` found in context.
     9. If needed, suggest related pages or sections of the website for further reading or detailed information.
     
     Context:{context}
