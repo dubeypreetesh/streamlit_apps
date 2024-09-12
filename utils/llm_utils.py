@@ -7,7 +7,7 @@ import openai
 from langsmith.wrappers import wrap_openai
 
 def get_llm_model():
-    llm_model = "gpt-3.5-turbo"
+    llm_model = "gpt-4o-mini"
     return llm_model
 
 
