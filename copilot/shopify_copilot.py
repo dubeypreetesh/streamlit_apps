@@ -168,7 +168,8 @@ def website_result(request_data):
     5. Keep answers relevant to the specific business domain of the website (e.g., commerce, services, gaming).
     6. Use any technical terms or jargon appropriately, ensuring clarity for both technical and non-technical users.
     7. Be mindful of the website's purpose: to offer expertise, products, or services related to its specific domain.
-    8. If needed, suggest related pages or sections of the website for further reading or detailed information.
+    8. Include links to relevant website pages in your responses whenever appropriate, based on the user query. Direct the user to pages with further reading or detailed information when necessary.
+    9. If needed, suggest related pages or sections of the website for further reading or detailed information.
     
     Context:{context}
     
