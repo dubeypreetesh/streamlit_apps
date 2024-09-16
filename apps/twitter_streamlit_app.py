@@ -38,6 +38,8 @@ from utils.meta_ai_client import MetaAIClient
 from datetime import datetime, timedelta, time
 import time
 import threading
+from utils import aws_client
+import uuid
 
 @st.dialog("Tweet Post Status")
 def display_response_dialog(message, status_code):
@@ -59,8 +61,8 @@ def generate_tweet(tweet_idea, messages, openai_api_key, tweet_form):
     tweet_stream = llm_utils.get_completion_stream(prompt=prompt, temperature=0.0, messages=messages_copy, openai_api_key=openai_api_key)
     return tweet_stream    
     #return tweet_idea
-    
-def generate_tweet_image(tweet):
+
+def generate_tweet_image_using_meta(tweet):
     meta_ai = MetaAIClient.get_instance(fb_email=st.secrets["meta_ai_credentials"]["fb_username"], fb_password=st.secrets["meta_ai_credentials"]["fb_password"])
     prompt=f"Create a vibrant, engaging image for the following tweet: [{tweet}]. Use eye-catching colors, creative typography, and a clean layout. Format the image for Twitter (1200x675 pixels, JPEG or PNG)."
     resp = meta_ai.prompt(message=prompt)
@@ -73,6 +75,19 @@ def generate_tweet_image(tweet):
                 image_url = media["url"]
                 break
     return image_url
+    
+def generate_tweet_image(tweet):
+    api_url = st.secrets["image_generation"]["api_url"]
+    api_key = st.secrets["image_generation"]["api_key"]
+    headers = {"Authorization": "Bearer {api_key}"}
+    
+    payload = {
+        "inputs": f"Create a vibrant, engaging image for the following tweet: [{tweet}]. Use eye-catching colors, creative typography, and a clean layout. Format the image for Twitter (1200x675 pixels, JPEG or PNG)."
+    }
+
+    response = requests.post(api_url, headers=headers, json=payload)
+    image_bytes = response.content
+    return image_bytes
 
 def save_tweet_streamlit_connection(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time):
     # Create the SQL connection to pets_db as specified in your secrets file.
@@ -130,6 +145,17 @@ def save_tweet(tweet, image_url, api_key, api_key_secret, access_token, access_t
                 "status": status
             }        
     return requests.post(url=url, json=payload)
+
+def upload_image(file_bytes):
+    access_key = st.secrets["aws_crendentials"]["access_key"]
+    secret_key = st.secrets["aws_crendentials"]["secret_key"]
+    region = st.secrets["aws_crendentials"]["region"]
+    bucket = st.secrets["aws_crendentials"]["bucket"]
+    
+    _aws_client = aws_client.AwsClient(aws_access_key=access_key, aws_secret_key=secret_key, aws_region=region)
+    file_url = _aws_client.upload_file_bytes_to_s3(file_bytes=file_bytes, bucket=bucket, s3_file_name=f"{str(uuid.uuid1())}.png")
+    print(f"file_url : {file_url}")
+    return file_url
     
 # Function to run the scheduler
 def scheduler():
@@ -203,9 +229,12 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.title("🦜🔗 Twitter App")
 col1, col2 = st.columns(2)
 with col1:
-    st.caption(":blue[_[Generate Image]_] :blue[Coming Soon] :sunglasses:")
-    generate_image = False
-    #generate_image = st.checkbox("Generate Image", key="generate_image")
+    generate_image = True
+    if generate_image:
+        generate_image = st.checkbox("Generate Image", key="generate_image")
+    else:
+        st.caption(":blue[_[Generate Image]_] :blue[Coming Soon] :sunglasses:")
+    #
 with col2:
     tweet_form = st.radio("Select Tweet Form", ["140 chars limit", "no limit"], key="tweet_form")
 
@@ -232,20 +261,20 @@ if user_input := st.chat_input("What's your tweet idea?"):
     with st.chat_message("assistant"):        
         stream = generate_tweet(user_input, st.session_state.messages, st.session_state.openai_api_key, tweet_form)
         generated_tweet=st.write_stream(stream)
-        generated_image_url=None
+        generated_image=None
         if generate_image:
             try:
-                generated_image_url = generate_tweet_image(generated_tweet)
-                if generated_image_url:
-                    st.image(generated_image_url)
+                generated_image = generate_tweet_image(generated_tweet)
+                if generated_image:
+                    st.image(generated_image)
             finally:
                 pass
     # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": generated_tweet, "image_url" : generated_image_url})    
+    st.session_state.messages.append({"role": "assistant", "content": generated_tweet, "image_url" : generated_image})    
     # Update assistant response to tweet
     st.session_state.tweet = generated_tweet
-    if generated_image_url:
-        st.session_state.tweet_image_url = generated_image_url
+    if generated_image:
+        st.session_state.tweet_image_url = generated_image
     else:
         st.session_state.tweet_image_url = None    
         
@@ -255,8 +284,13 @@ with st.sidebar:
         st.warning("Please enter your OpenAI API key!", icon="⚠")
     with st.form("twitter_form"):
         st.write("Post this on X")
+        tweet_image_url = None
         tweet = st.text_area(label="Tweet", key="tweet", placeholder="Your tweet to be posted")
-        tweet_image_url = st.text_input(label="Tweet Image Url", key="tweet_image_url", placeholder="Image Url to be posted")
+        
+        #tweet_image_url = st.text_input(label="Tweet Image Url", key="tweet_image_url", placeholder="Image Url to be posted")
+        if generated_image:
+            st.image(generated_image)
+        
         twitter_api_key = st.text_input(label="Api Key", key="twitter_api_key", placeholder="X Developer Account Api Key")
         twitter_api_key_secret = st.text_input(label="Api Key Secret", key="twitter_api_key_secret", placeholder="X Developer Account Api Key Secret")
         twitter_access_token = st.text_input(label="Access Token", key="twitter_access_token", placeholder="X Developer Account Access Token")
@@ -277,7 +311,17 @@ with st.sidebar:
             """
             schedule_date_time=datetime.combine(schedule_date, schedule_time)
             schedule_date_time_str = schedule_date_time.strftime('%Y-%m-%d %H:%M:%S')
-            save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time_str, "PENDING")
-            display_response_dialog(message="Tweet Scheduled Successfully", status_code=200)
+            
+            if generated_image:
+                try:
+                    tweet_image_url= upload_image(generated_image)
+                except Exception as e:
+                    print(f"Error :: {e.message}")
+            
+            if generated_image and tweet_image_url:
+                save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time_str, "PENDING")
+                display_response_dialog(message="Tweet Scheduled Successfully", status_code=200)
+            else:
+                display_response_dialog(message="Error while uploading the Image File", status_code=400)
             
                          
