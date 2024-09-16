@@ -39,6 +39,7 @@ from datetime import datetime, timedelta, time
 import time
 import threading
 import uuid
+from io import BytesIO
 
 @st.dialog("Tweet Post Status")
 def display_response_dialog(message, status_code):
@@ -265,7 +266,7 @@ if user_input := st.chat_input("What's your tweet idea?"):
             try:
                 generated_image = generate_tweet_image(generated_tweet)
                 if generated_image:
-                    st.image(generated_image)
+                    st.image(BytesIO(generated_image))
             finally:
                 pass
     # Add assistant response to chat history
@@ -288,7 +289,7 @@ with st.sidebar:
         
         #tweet_image_url = st.text_input(label="Tweet Image Url", key="tweet_image_url", placeholder="Image Url to be posted")
         if generated_image:
-            st.image(generated_image)
+            st.image(BytesIO(generated_image))
         
         twitter_api_key = st.text_input(label="Api Key", key="twitter_api_key", placeholder="X Developer Account Api Key")
         twitter_api_key_secret = st.text_input(label="Api Key Secret", key="twitter_api_key_secret", placeholder="X Developer Account Api Key Secret")
