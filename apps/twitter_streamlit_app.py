@@ -32,13 +32,12 @@ if is_cloud:
     os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["langsmith"]["LANGCHAIN_TRACING_V2"]
     os.environ["LANGCHAIN_API_KEY"] = st.secrets["langsmith"]["LANGCHAIN_API_KEY"]
 
-from utils import llm_utils
+from utils import llm_utils, aws_client
 from proxy import twitter_proxy
 from utils.meta_ai_client import MetaAIClient
 from datetime import datetime, timedelta, time
 import time
 import threading
-from utils import aws_client
 import uuid
 
 @st.dialog("Tweet Post Status")
