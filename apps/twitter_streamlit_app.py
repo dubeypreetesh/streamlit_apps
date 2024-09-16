@@ -248,6 +248,7 @@ for message in st.session_state.messages:
         if message["image_url"]:
             st.image(message["image_url"])
 
+generated_image=None
 # Accept user input        
 if user_input := st.chat_input("What's your tweet idea?"):
     # Display user message in chat message container
@@ -260,7 +261,6 @@ if user_input := st.chat_input("What's your tweet idea?"):
     with st.chat_message("assistant"):        
         stream = generate_tweet(user_input, st.session_state.messages, st.session_state.openai_api_key, tweet_form)
         generated_tweet=st.write_stream(stream)
-        generated_image=None
         if generate_image:
             try:
                 generated_image = generate_tweet_image(generated_tweet)
