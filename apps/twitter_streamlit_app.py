@@ -7,7 +7,6 @@ import sys
 import os
 import sqlite3
 from pathlib import Path
-from streamlit.runtime.scriptrunner import add_script_run_ctx
 import requests
 from dotenv import load_dotenv, find_dotenv
 import streamlit as st
@@ -37,9 +36,9 @@ from proxy import twitter_proxy
 from utils.meta_ai_client import MetaAIClient
 from datetime import datetime, timedelta, time
 import time
-import threading
 import uuid
-from io import BytesIO
+import io
+from PIL import Image
 
 @st.dialog("Tweet Post Status")
 def display_response_dialog(message, status_code):
@@ -50,9 +49,9 @@ def generate_tweet(tweet_idea, messages, openai_api_key, tweet_form):
     # Generate Tweet Text
     #Please be strict to keep the generated text length within the 280 characters limit.
     if tweet_form=="140 chars limit":
-        prompt = f"Craft a concise tweet to share [{tweet_idea}]. Be creative and engaging, ensuring that the tweet captivates the audience's attention and leaves a lasting impression. Please be strict to keep the generated text length within the 140 characters limit."
+        prompt = f"Write a concise tweet based on [{tweet_idea}]. Make it catchy, engaging, and memorable while staying within the 140-character limit. Focus on clarity, creativity, and impact, ensuring it grabs the audience's attention instantly."
     else:
-        prompt = f"Craft a detailed tweet to share [{tweet_idea}]. Be creative and engaging, providing more context and explanation ensuring that the tweet captivates the audience's attention and leaves a lasting impression. Feel free to go beyond single tweet limit."
+        prompt = f"Create a detailed tweet based on [{tweet_idea}]. Be creative and engaging, providing context, explanation, and depth while maintaining a conversational and captivating tone. You can exceed the single tweet limit if needed, but ensure it’s cohesive and compelling."
         
     #Removing "image_url" key from each message to reduce number of tokens send to AI.
     messages_copy = [{k: v for k, v in d.items() if k != "image_url"} for d in messages]
@@ -60,9 +59,8 @@ def generate_tweet(tweet_idea, messages, openai_api_key, tweet_form):
     
     tweet_stream = llm_utils.get_completion_stream(prompt=prompt, temperature=0.0, messages=messages_copy, openai_api_key=openai_api_key)
     return tweet_stream    
-    #return tweet_idea
 
-def generate_tweet_image_using_meta(tweet):
+def generate_tweet_image_using_meta(tweet: str):
     meta_ai = MetaAIClient.get_instance(fb_email=st.secrets["meta_ai_credentials"]["fb_username"], fb_password=st.secrets["meta_ai_credentials"]["fb_password"])
     prompt=f"Create a vibrant, engaging image for the following tweet: [{tweet}]. Use eye-catching colors, creative typography, and a clean layout. Format the image for Twitter (1200x675 pixels, JPEG or PNG)."
     resp = meta_ai.prompt(message=prompt)
@@ -75,16 +73,16 @@ def generate_tweet_image_using_meta(tweet):
                 image_url = media["url"]
                 break
     return image_url
-    
-def generate_tweet_image(tweet):
+
+def generate_tweet_image(tweet: str):
     api_url = st.secrets["image_generation"]["api_url"]
     api_key = st.secrets["image_generation"]["api_key"]
-    headers = {"Authorization": "Bearer {api_key}"}
+    headers = {"Authorization": f"Bearer {api_key}"}
     
     payload = {
-        "inputs": f"Create a vibrant, engaging image for the following tweet: [{tweet}]. Use eye-catching colors, creative typography, and a clean layout. Format the image for Twitter (1200x675 pixels, JPEG or PNG)."
+        "inputs": f"Design a vibrant, engaging image for the following tweet: [{tweet}]. Ensure the image is eye-catching with bold, contrasting colors and dynamic, creative typography that matches the tweet’s tone. Keep the layout clean and balanced, with enough negative space to avoid clutter. Incorporate visual elements or icons relevant to the tweet’s content. Format the image for Twitter (1200x675 pixels, JPEG or PNG) with optimized clarity for both mobile and desktop viewing."
     }
-
+    
     response = requests.post(api_url, headers=headers, json=payload)
     image_bytes = response.content
     return image_bytes
@@ -146,16 +144,25 @@ def save_tweet(tweet, image_url, api_key, api_key_secret, access_token, access_t
             }        
     return requests.post(url=url, json=payload)
 
-def upload_image(file_bytes):
+def upload_image(file_bytes: bytes):
     access_key = st.secrets["aws_crendentials"]["access_key"]
     secret_key = st.secrets["aws_crendentials"]["secret_key"]
     region = st.secrets["aws_crendentials"]["region"]
     bucket = st.secrets["aws_crendentials"]["bucket"]
+    print(f"access_key : {access_key}, secret_key : {secret_key}, region : {region}, bucket : {bucket}")
     
     _aws_client = aws_client.AwsClient(aws_access_key=access_key, aws_secret_key=secret_key, aws_region=region)
     file_url = _aws_client.upload_file_bytes_to_s3(file_bytes=file_bytes, bucket=bucket, s3_file_name=f"{str(uuid.uuid1())}.png")
     print(f"file_url : {file_url}")
     return file_url
+
+def create_blank_image(width=100, height=100, color='grey'):
+    # Create a blank image
+    image = Image.new('RGB', (width, height), color)
+    byte_io = io.BytesIO()
+    image.save(byte_io, format='PNG')
+    byte_io.seek(0)  # Rewind the BytesIO object to the beginning
+    return byte_io
     
 # Function to run the scheduler
 def scheduler():
@@ -241,55 +248,74 @@ with col2:
 # Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
+if "tweet_image_url" not in st.session_state:
+    st.session_state.tweet_image_url=None
+    
 # Display chat messages from history on app rerun  
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
         if message["image_url"]:
             st.image(message["image_url"])
-
+            
+            
 generated_image=None
-# Accept user input        
-if user_input := st.chat_input("What's your tweet idea?"):
-    # Display user message in chat message container
-    with st.chat_message("user"):
-        st.markdown(user_input)
-    # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": user_input, "image_url" : None})
-    
-    # Display assistant response in chat message container
-    with st.chat_message("assistant"):        
-        stream = generate_tweet(user_input, st.session_state.messages, st.session_state.openai_api_key, tweet_form)
-        generated_tweet=st.write_stream(stream)
-        if generate_image:
-            try:
-                generated_image = generate_tweet_image(generated_tweet)
-                if generated_image:
-                    st.image(BytesIO(generated_image))
-            finally:
-                pass
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": generated_tweet, "image_url" : generated_image})    
-    # Update assistant response to tweet
-    st.session_state.tweet = generated_tweet
-    if generated_image:
-        st.session_state.tweet_image_url = generated_image
-    else:
-        st.session_state.tweet_image_url = None    
-        
 with st.sidebar:
     openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
     if not openai_api_key.startswith("sk-"):
         st.warning("Please enter your OpenAI API key!", icon="⚠")
+        
+# Accept user input        
+if user_input := st.chat_input("What's your tweet idea?"):
+    if openai_api_key.startswith("sk-"):
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(user_input)
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": user_input, "image_url" : None})
+        
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):        
+            stream = generate_tweet(user_input, st.session_state.messages, st.session_state.openai_api_key, tweet_form)
+            generated_tweet=st.write_stream(stream)
+            if generate_image:
+                try:
+                    generated_image = generate_tweet_image(generated_tweet)
+                except Exception as e:
+                    print(f"Error while generating the image :: {e.message}")
+                if generated_image:
+                    image_bytes_io = io.BytesIO(generated_image)
+                    image_bytes_io.seek(0)
+                    st.image(image=image_bytes_io)
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": generated_tweet, "image_url" : generated_image})    
+        # Update assistant response to tweet
+        st.session_state.tweet = generated_tweet
+        if generated_image:
+            st.session_state.tweet_image_url = generated_image
+        else:
+            st.session_state.tweet_image_url = None
+
+import traceback
+with st.sidebar:
+    _="""
+    openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
+    if not openai_api_key.startswith("sk-"):
+        st.warning("Please enter your OpenAI API key!", icon="⚠")
+    """
     with st.form("twitter_form"):
         st.write("Post this on X")
         tweet_image_url = None
         tweet = st.text_area(label="Tweet", key="tweet", placeholder="Your tweet to be posted")
         
         #tweet_image_url = st.text_input(label="Tweet Image Url", key="tweet_image_url", placeholder="Image Url to be posted")
-        if generated_image:
-            st.image(BytesIO(generated_image))
+        if st.session_state.tweet_image_url:
+            image_bytes_io = io.BytesIO(st.session_state.tweet_image_url)
+            image_bytes_io.seek(0)
+            st.image(image=image_bytes_io, caption="Image to be submitted")
+        else:
+            blank_image = create_blank_image()
+            st.image(image=blank_image, caption='No image available')
         
         twitter_api_key = st.text_input(label="Api Key", key="twitter_api_key", placeholder="X Developer Account Api Key")
         twitter_api_key_secret = st.text_input(label="Api Key Secret", key="twitter_api_key_secret", placeholder="X Developer Account Api Key Secret")
@@ -304,7 +330,8 @@ with st.sidebar:
         schedule_time = st.time_input(label="Tweet Schedule Time", value=None, key="schedule_time")
         # Every form must have a submit button.
         post_tweet_submitted = st.form_submit_button("Schedule Tweet")
-        if post_tweet_submitted and openai_api_key.startswith("sk-"):
+        
+        if post_tweet_submitted:
             _="""
             twitter_poster = twitter_proxy.TwitterPoster(twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret)
             message, status_code = twitter_poster.post_thread(tweet_text=tweet, image_url=tweet_image_url)
@@ -312,16 +339,20 @@ with st.sidebar:
             schedule_date_time=datetime.combine(schedule_date, schedule_time)
             schedule_date_time_str = schedule_date_time.strftime('%Y-%m-%d %H:%M:%S')
             
-            if generated_image:
+            if st.session_state.tweet_image_url:
                 try:
-                    tweet_image_url= upload_image(generated_image)
+                    print('===create image url')
+                    tweet_image_url= upload_image(file_bytes=st.session_state.tweet_image_url)
+                    print(f"image url : {tweet_image_url}")
                 except Exception as e:
-                    print(f"Error :: {e.message}")
+                    print(f"Error while uploading the image :: {e.message}")
+                    print(traceback.format_exc())
+            else:
+                print("===inside else")
             
-            if generated_image and tweet_image_url:
+            if st.session_state.tweet_image_url and tweet_image_url:
                 save_tweet(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secret, twitter_access_token, twitter_access_token_secret, schedule_date_time_str, "PENDING")
                 display_response_dialog(message="Tweet Scheduled Successfully", status_code=200)
             else:
-                display_response_dialog(message="Error while uploading the Image File", status_code=400)
-            
+                display_response_dialog(message="Error while uploading the Image File", status_code=400)                        
                          
