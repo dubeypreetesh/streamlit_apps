@@ -133,7 +133,7 @@ def save_tweet_old(tweet, tweet_image_url, twitter_api_key, twitter_api_key_secr
     connection.close()
     
 def save_tweet(tweet, image_url, api_key, api_key_secret, access_token, access_token_secret, schedule_date_time, status):
-    url = st.secrets["save_tweet_url"]
+    url = st.secrets["copilot"]["tweet_save_api_url"]
     payload = {
                 "tweet": tweet,
                 "image_url": image_url,
