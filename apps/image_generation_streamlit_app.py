@@ -45,6 +45,7 @@ def generate_image_using_flux_hugging_face(prompt: str, hf_access_token: str) ->
     }
 
     response = requests.post(api_url, headers=headers, json=payload)
+    response.raise_for_status() # This will raise an HTTPError for bad responses
     image_bytes = response.content
     return image_bytes
 
