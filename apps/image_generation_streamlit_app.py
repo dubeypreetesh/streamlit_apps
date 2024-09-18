@@ -98,6 +98,8 @@ if user_input := st.chat_input("Imagine your idea..."):
                 error_message = http_err.message
             except UnidentifiedImageError as uie:
                 error_message = uie.message
+            except FileNotFoundError as fnfe:
+                error_message = fnfe.message
             except Exception as e:
                 error_message = e.message
             
