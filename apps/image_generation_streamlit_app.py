@@ -96,7 +96,7 @@ if user_input := st.chat_input("Imagine your idea..."):
             try:
                 generated_image = generate_image_using_flux_hugging_face(prompt=user_input, hf_access_token=hf_access_token)
             except requests.exceptions.HTTPError as http_err:
-                error_message = http_err.message
+                error_message = http_err
             except UnidentifiedImageError as uie:
                 error_message = uie.message
             except FileNotFoundError as fnfe:
