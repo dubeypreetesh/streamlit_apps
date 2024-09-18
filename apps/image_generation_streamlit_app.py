@@ -34,6 +34,7 @@ st.set_page_config(page_title=page_title, page_icon=":flag-in:")
 
 import io
 import requests
+from PIL import UnidentifiedImageError
 
 def generate_image_using_flux_hugging_face(prompt: str, hf_access_token: str) -> bytes:
     api_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
@@ -95,6 +96,8 @@ if user_input := st.chat_input("Imagine your idea..."):
                 generated_image = generate_image_using_flux_hugging_face(prompt=user_input, hf_access_token=hf_access_token)
             except requests.exceptions.HTTPError as http_err:
                 error_message = http_err.message
+            except UnidentifiedImageError as uie:
+                error_message = uie.message
             except Exception as e:
                 error_message = e.message
             
