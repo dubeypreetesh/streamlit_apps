@@ -93,9 +93,10 @@ if user_input := st.chat_input("Imagine your idea..."):
         with st.chat_message("assistant"):
             try:
                 generated_image = generate_image_using_flux_hugging_face(prompt=user_input, hf_access_token=hf_access_token)
+            except requests.exceptions.HTTPError as http_err:
+                error_message = http_err.message
             except Exception as e:
                 error_message = e.message
-                print(f"Error while generating the image :: {e.message}")
             
             if generated_image:
                 # Add assistant response to chat history
