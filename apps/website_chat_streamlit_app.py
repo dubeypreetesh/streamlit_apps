@@ -50,7 +50,7 @@ def create_placeholder_messages(messages: list):
     return messages_copy
 
 #domain, email, name, human_message, ai_message, ai_error_messag
-def website_lead_save(api_url: str,domain: str, name: str, email: str, human_message: str,ai_message:str,ai_error_messag:str):
+def website_lead_save(api_url: str,domain: str, name: str, email: str, human_message: str,ai_message:str,ai_error_message:str):
     # Send the user message to your API and get the bot response
     payload = {
         "domain": domain,
@@ -58,7 +58,7 @@ def website_lead_save(api_url: str,domain: str, name: str, email: str, human_mes
         "email":email,
         "human_message":human_message,
         "ai_message":ai_message,
-        "ai_error_messag":ai_error_messag
+        "ai_error_message":ai_error_message
     }
     return requests.post(url=api_url, json=payload)
 
@@ -122,8 +122,8 @@ if user_input := st.chat_input("What's your query?"):
         st.session_state.messages.append({"role": "assistant", "content": ai_message})
         if ai_message:
             try:
-                website_lead_save(api_url=st.secrets["copilot"]["website_lead_save_api_url"], domain=domain, name=user_name, email=user_email, human_message=user_input, ai_message=ai_message, ai_error_messag=None)
+                website_lead_save(api_url=st.secrets["copilot"]["website_lead_save_api_url"], domain=domain, name=user_name, email=user_email, human_message=user_input, ai_message=ai_message, ai_error_message=None)
             except Exception as e:
                 pass
     else:
-        st.write("Enter Name , Email, openai_api_key")      
+        st.write("Enter Name , Email, OpenAI Api Key")      
