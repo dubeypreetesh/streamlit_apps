@@ -81,7 +81,8 @@ with st.sidebar:
     hf_access_token = st.text_input("HF Access Token", type="password", key="hf_access_token")
     if not hf_access_token:
         st.warning("Please enter HF Access Token!", icon="⚠")
-        
+
+generated_image=None        
 # Accept user input        
 if user_input := st.chat_input("Imagine your idea..."):
     if hf_access_token:
