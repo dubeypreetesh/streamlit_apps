@@ -54,7 +54,7 @@ def shopify_result(request_data):
     llm = llm_utils.get_chat_model(False, False, openai_api_key=openai_api_key)
     
     client = get_shopify_chroma_instance(database=shop_id, host=chroma_host, port=chroma_port)
-    embedding_function = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    embedding_function = OpenAIEmbeddings(openai_api_key=openai_api_key,model="text-embedding-3-large")
     vectorstore = Chroma(client=client, collection_name=collection_name, embedding_function=embedding_function)
     
     retriever = vectorstore.as_retriever()
