@@ -103,6 +103,7 @@ def shopify_result(request_data):
     Context:{context}
     
     Use the above Context and Instructions and Response Guidelines to provide accurate and helpful responses to user queries.
+    Please answer the user queries based solely on the provided context. Do not include any information outside of this context.
     """
     
     """
