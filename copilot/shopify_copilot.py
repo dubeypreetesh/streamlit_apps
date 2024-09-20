@@ -71,7 +71,9 @@ def shopify_result(request_data):
         retriever.search_kwargs = {"filter": {"user_id": request_data["user_id"]}, "k": 10}
     
     system_prompt = """
-    You are an AI assistant specialized in eCommerce support. You will be provided with context regarding eCommerce products and user orders. Based on this context, you need to respond to user queries with precise and accurate information. 
+    You are an AI assistant specialized in eCommerce support. You will be provided with context regarding eCommerce products and user orders. Based on this context, you need to respond to user queries with precise and accurate information.
+    This chat is focused on eCommerce customer support. Please answer questions only related to this domain.
+    If a question falls outside the eCommerce support domain, please respond with: 'I can only assist with questions related to eCommerce customer support. 
 
     ### Instructions:
     
