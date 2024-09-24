@@ -6,13 +6,14 @@ Created on 09-Sep-2024
 
 import os
 import sys
+import uuid
 
 from dotenv import load_dotenv, find_dotenv
+import requests
+from streamlit_javascript import st_javascript
 
 from copilot import shopify_copilot
-from streamlit_javascript import st_javascript
 import streamlit as st
-import requests
 
 
 _ = load_dotenv(find_dotenv())  # read local .env file
@@ -50,17 +51,21 @@ def create_placeholder_messages(messages: list):
     return messages_copy
 
 #domain, email, name, human_message, ai_message, ai_error_messag
-def website_lead_save(api_url: str,domain: str, name: str, email: str, human_message: str,ai_message:str,ai_error_message:str):
+def website_lead_save(api_url: str,x_api_key: str,session_id:str, name: str, email: str, human_message: str,ai_message:str,ai_error_message:str):
     # Send the user message to your API and get the bot response
+    headers = {
+    "x-api-key": x_api_key,
+    "Content-Type": "application/json"
+    }
     payload = {
-        "domain": domain,
+        "session_id": session_id,
         "name":name,
         "email":email,
         "human_message":human_message,
         "ai_message":ai_message,
         "ai_error_message":ai_error_message
     }
-    return requests.post(url=api_url, json=payload)
+    return requests.post(url=api_url,headers=headers, json=payload)
 
     
 page_title = f"OnGraph AI Assistant"
@@ -80,6 +85,8 @@ st.title("🔗 OnGraph AI Assistant")
 # Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if 'session_id' not in st.session_state:
+    st.session_state['session_id'] = str(uuid.uuid4())
     
 # Display chat messages from history on app rerun  
 for message in st.session_state.messages:
@@ -122,7 +129,8 @@ if user_input := st.chat_input("What's your query?"):
         st.session_state.messages.append({"role": "assistant", "content": ai_message})
         if ai_message:
             try:
-                website_lead_save(api_url=st.secrets["copilot"]["website_lead_save_api_url"], domain=domain, name=user_name, email=user_email, human_message=user_input, ai_message=ai_message, ai_error_message=None)
+                session_id=st.session_state['session_id']
+                website_lead_save(api_url=st.secrets["copilot"]["website_lead_save_api_url"],x_api_key=st.secrets["copilot"]["website_x_api_key"] ,session_id=session_id, name=user_name, email=user_email, human_message=user_input, ai_message=ai_message, ai_error_message=None)
             except Exception as e:
                 pass
     else:
