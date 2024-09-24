@@ -93,7 +93,7 @@ token = query_params.get('token')
 
 token_secret = st.secrets["shopify_credentials"]["jwt_secret"]
 decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
-page_title = f"I am Mira - you personal 24/7 Shopping Assistant for {decoded_token['shopId']}"
+page_title = f"I am Mira - you personal 24/7 Shopping Assistant for {decoded_token['shopName']}"
 st.set_page_config(page_title=page_title, page_icon=":flag-in:")
 
 hide_streamlit_style = """
@@ -108,7 +108,9 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.title("🔗 Shopify App")
 # Initialize chat history
 if "messages" not in st.session_state:
-    st.session_state.messages = create_chat_messages(fetch_chat_history(api_url=st.secrets["shopify_credentials"]["chat_history_api"], token=token).json())
+    response = fetch_chat_history(api_url=st.secrets["shopify_credentials"]["chat_history_api"], token=token).json()
+    checkout_data = response["checkout_data"]
+    st.session_state.messages = create_chat_messages(response)
     
 # Display chat messages from history on app rerun  
 for message in st.session_state.messages:
@@ -135,7 +137,7 @@ if user_input := st.chat_input("What's your query?"):
         with st.chat_message("assistant"):
             ai_message = shopify_copilot.fetch_result(token=token, token_secret=st.secrets["shopify_credentials"]["jwt_secret"] ,
                         question=user_input, openai_api_key=openai_api_key, messages=create_placeholder_messages(st.session_state.messages),
-                        chroma_host=st.secrets["chroma_credentials"]["host"], chroma_port=st.secrets["chroma_credentials"]["port"])
+                        checkout_data, chroma_host=st.secrets["chroma_credentials"]["host"], chroma_port=st.secrets["chroma_credentials"]["port"])
             st.markdown(ai_message)
         
         # Add assistant response to chat history
