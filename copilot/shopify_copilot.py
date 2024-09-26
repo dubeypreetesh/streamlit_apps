@@ -6,6 +6,7 @@ Created on 12 Jun 2024
 # these three lines swap the stdlib sqlite3 lib with the pysqlite3 package
 from langsmith.run_helpers import traceable
 from langchain_openai.chat_models.base import ChatOpenAI
+from langchain_core.exceptions import OutputParserException
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
@@ -24,6 +25,7 @@ import requests
 from data_objects.user_query import UserQuery
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
+import json
 
 # JWT_SECRET=st.secrets["shopify_credentials"]["jwt_secret"]
 def fetch_result(token: str, token_secret: str, question:str, openai_api_key: str, messages: list, checkout_data: list ,chroma_host:str, chroma_port: int, get_orders_api_url: str): 
@@ -49,9 +51,21 @@ def get_shopify_orders(api_url: str, shop_id: str, user_id: str, order_numbers: 
     url = f"{api_url}?shopId={shop_id}&userId={user_id}&orderNumbers={order_numbers_str}"
     return requests.get(url=url)
 
+def clean_and_parse_json(response: str):
+    # Remove any non-JSON content
+    try:
+        json_str = response.strip().replace("```json", "").replace("```", "").strip()
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        raise OutputParserException(f"Failed to parse JSON response: {e}")
+
+from data_objects.user_query import CustomJSONOutputParser
 def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -> UserQuery:   
     # Set up a parser + inject instructions into the prompt template.
-    parser = PydanticOutputParser(pydantic_object=UserQuery)
+    #parser = PydanticOutputParser(pydantic_object=UserQuery)
+    
+    # Create a custom output parser
+    parser = CustomJSONOutputParser()
     
     # Define the prompt with clear instructions
     prompt = PromptTemplate(
@@ -78,7 +92,7 @@ def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -
 
         User query: {query}
         
-        Your response **must** be a valid JSON object in the following format:
+        Return only a valid JSON object, strictly formatted as follows:
 
         ```json
         {{
@@ -89,18 +103,19 @@ def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -
         }}
         ```
 
-        Ensure your response is strictly formatted as a JSON object with no additional comments, text, or explanation.
+        Your response **must only** contain the JSON object. Avoid any extra text, comments, explanations, or markdown formatting around the output.
         """,
         input_variables=["chat_history", "query"],
-        partial_variables={"format_instructions": parser.get_format_instructions()},
+        #partial_variables={"format_instructions": parser.get_format_instructions()},
     )
     
     # Combine history and current query for complete context
     chat_history_str = "\n".join([f"{speaker}: {content}" for speaker, content in chat_history])
     chain = prompt | model | parser
     response = chain.invoke({"chat_history" : chat_history_str, "query": query})
-    print(f"pydantic response : {response}")
-    return response
+    user_query_data = UserQuery(**response)
+    return user_query_data
+   
 
 @traceable  # Auto-trace this function
 def shopify_result(request_data):

@@ -9,6 +9,9 @@ from pydantic import BaseModel, Field, root_validator
 from utils import llm_utils
 from dotenv import load_dotenv, find_dotenv
 import os
+from langchain_core.output_parsers.base import BaseOutputParser
+import json
+from langchain_core.exceptions import OutputParserException
 
 _ = load_dotenv(find_dotenv())  # read local .env file
 
@@ -47,11 +50,39 @@ class UserQuery(BaseModel):
         # Both is_checkout_inquiry and is_product_inquiry can be True together
         return values
     """
+    
+class CustomJSONOutputParser(BaseOutputParser):
+    def parse(self, text: str) -> dict:
+        try:
+            # Clean the response text by removing unnecessary ```json or other extraneous characters
+            clean_text = self.clean_and_parse_json(text)
+            
+            # Parse the cleaned JSON string
+            return json.loads(clean_text)
+        except json.JSONDecodeError as e:
+            raise OutputParserException(f"Failed to parse output as valid JSON: {str(e)}")
+    
+    def clean_and_parse_json(self, text: str) -> str:
+        # Check if the response starts with ```json or similar patterns
+        if text.startswith("```json."):
+            # Strip the backticks and "json" identifier
+            text = text.strip("```json.").strip("```")
+        elif text.startswith("```json"):
+            # Strip the backticks and "json" identifier
+            text = text.strip("```json").strip("```")
+        elif text.startswith("```"):
+            # If it starts with just backticks, strip them too
+            text = text.strip("```")
+        
+        # Remove any trailing or leading whitespace
+        return text.strip()
+
 
 def test_pydantic(query: str, chat_history: list):  
     try: 
         # Set up a parser + inject instructions into the prompt template.
-        parser = PydanticOutputParser(pydantic_object=UserQuery)
+        #parser = PydanticOutputParser(pydantic_object=UserQuery)
+        parser = CustomJSONOutputParser()
         
         # Define the prompt with clear instructions
         prompt = PromptTemplate(
@@ -92,7 +123,7 @@ def test_pydantic(query: str, chat_history: list):
             Ensure your response is strictly formatted as a JSON object with no additional comments, text, or explanation.
             """,
             input_variables=["chat_history", "query"],
-            partial_variables={"format_instructions": parser.get_format_instructions()},
+            #partial_variables={"format_instructions": parser.get_format_instructions()},
         )
         
         # Combine history and current query for complete context
@@ -113,7 +144,17 @@ if __name__ == '__main__':
         ("assistant", "Could you kindly provide the order number(s) related to your query so I can assist you better?")
     ]
     
-    response = test_pydantic(chat_history=chat_history, query="Tell me more about items present in my abandon checkout?")
-    print(f"response : {response}")
+    #response = test_pydantic(chat_history=chat_history, query="Tell me more about items present in my abandon checkout?")
+    #print(f"response : {response}")
+    text ="""```json
+        {
+            "is_order_inquiry": True,
+            "is_checkout_inquiry": False,
+            "is_product_inquiry": False,
+            "extracted_order_numbers": []
+        }
+        ```"""
+    text = text.strip("```json").strip("```")
+    print(text)
     
     
