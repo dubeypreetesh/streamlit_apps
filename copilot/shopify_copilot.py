@@ -108,9 +108,8 @@ def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -
         
         chain = prompt | model
         response = chain.invoke({"chat_history" : chat_history_str, "query": query})
-        
         #Extract json and remove any extra chars if any
-        output_str = response.to_string()
+        output_str = response.content
         start = output_str.find('{')
         end = output_str.find('}')+1
         output_str_final = output_str[start:end]
@@ -184,16 +183,18 @@ def shopify_result(request_data):
         
         1. **Checkout Data**:
             - Always prioritize the "Checkout Data" when answering queries related to items in the user's checkout.
-            - When a user asks about what product is in their checkout, **match the product in the "Checkout Data" with the product in the "Products Data" using unique identifiers**, such as the `item_variant_id`.
-            - Use the matched product from the "Products Data" to provide additional details such as specifications, pricing, and availability.
+            - When a user asks about the product in their checkout, **you MUST match the product in the "Checkout Data" with the corresponding product in the "Products Data" using the `item_variant_id` field**. 
+            - Use the `item_variant_id` to precisely identify the product variant in both sections.
+            - Once you find the matching product in "Products Data" using `item_variant_id`, use that information to provide detailed product descriptions, features, specifications, and pricing.
         
         2. **Product Queries**:
-            - Provide detailed information about products listed in the "Products Data" when the query is about products in general, or when there is no matching checkout item.
-            - For queries like "Which product is in my checkout?", first match the product using the unique identifier from the "Checkout Data", and then provide detailed information from the "Products Data".
+            - If a query is about products in general, answer based on the "Products Data" without relying on the checkout context. 
+            - For queries about specific products in the checkout (e.g., "Which product is in my checkout?"), first find the product in the "Checkout Data" using its `item_variant_id` and then match it with the same `item_variant_id` in the "Products Data". 
+            - Only after successfully matching, provide information about that product.
         
         3. **Order Queries**:
-            - Retrieve and summarize order details based on the "Orders Data", such as order status, tracking information, estimated delivery times, and order history.
-            - Handle queries about order modifications, cancellations, returns, and refunds based solely on the "Orders Data".
+            - Retrieve and summarize order details from the "Orders Data" such as order status, tracking information, estimated delivery times, and order history.
+            - Handle queries about order modifications, cancellations, returns, and refunds based solely on the "Orders Data."
         
         4. **General eCommerce Support**:
             - Assist with account-related inquiries, including account settings, password resets, and payment methods.
@@ -206,12 +207,13 @@ def shopify_result(request_data):
           - **Products Data**: General information about available products.
           - **Orders Data**: Information about the user’s order history and status.
         
-        - **Matching Process**: For queries like "Which product is in my checkout?":
-          - First, extract the product details from the "Checkout Data".
-          - Use the `item_variant_id` or a similar unique identifier to match the product in the "Products Data".
-          - Once the product is matched, provide detailed information about that product from the "Products Data".
+        - **Exact Matching Process**: 
+            - When asked about items in the checkout (e.g., "Which product is in my checkout?"), first extract the `item_variant_id` from the "Checkout Data".
+            - Then, locate the same `item_variant_id` in the "Products Data" to retrieve full product details.
+            - Do not assume the first product in the list is correct — the answer must be based on matching `item_variant_id` exactly.
+            - **Only after confirming this match** should you provide the user with details from "Products Data".
         
-        - **Avoid Assumptions**: Do not make assumptions based on the order or presence of products in "Products Data". Always match products based on the provided identifiers.
+        - **Avoid Assumptions**: Do not make assumptions based on the order or presence of products in "Products Data". Always match products based on the provided `item_variant_id`.
         
         ### Response Guidelines:
         
@@ -234,6 +236,7 @@ def shopify_result(request_data):
         Use the above Context and Instructions and Response Guidelines to provide accurate and helpful responses to user queries.
         Please answer the user queries based solely on the provided context. Do not include any information outside of this context.
     """
+
 
 
     
