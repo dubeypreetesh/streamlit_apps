@@ -59,62 +59,62 @@ def clean_and_parse_json(response: str):
     except json.JSONDecodeError as e:
         raise OutputParserException(f"Failed to parse JSON response: {e}")
 
-from data_objects.user_query import CustomJSONOutputParser
 def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -> UserQuery:   
-    # Set up a parser + inject instructions into the prompt template.
-    #parser = PydanticOutputParser(pydantic_object=UserQuery)
+        # Set up a parser + inject instructions into the prompt template.
+        parser = PydanticOutputParser(pydantic_object=UserQuery)
+        
+        # Define the prompt with clear instructions
+        prompt = PromptTemplate(
+            template="""
+            You are an AI assistant specialized in eCommerce support. Analyze the following chat history and the current user query to determine the following:
     
-    # Create a custom output parser
-    parser = CustomJSONOutputParser()
+            1. `is_order_inquiry`: Set this to True **only if** the query is asking for information specific to the status, modification, or details of a particular order (e.g., order status, delivery status, or product-related issues in a specific order). 
+            
+                If the query is about general processes or policies (e.g., "How can I cancel my order?" or "What is your return policy?") even if an order number is mentioned, set this to False. Focus on the intent of the query—if the user is asking about a process that can be answered through general policy or FAQ documentation, set this to False.
+                
+                If the query is related to an order, set `is_checkout_inquiry` to False.  
+            
+            2. `is_checkout_inquiry`: Set this to True if the query is asking about items present in the user's abandoned checkout (e.g., "What items are in my checkout?" or "Can you apply a discount to my checkout items?"). 
+                
+                If the query is related to an abandoned checkout, set `is_order_inquiry` to False.
+                
+            3. Ensure that **only one of** `is_order_inquiry` or `is_checkout_inquiry` can be True at a time. If one is True, the other must be False.
+            
+            4. `is_product_inquiry`: Set this to True if the query asks about product details, features, availability, or recommendations (e.g., "What are the features of this product?" or "Tell me about the products in my checkout."). Both `is_product_inquiry` and `is_checkout_inquiry` can be True if the user is asking for product information related to their abandoned checkout.
     
-    # Define the prompt with clear instructions
-    prompt = PromptTemplate(
-        template="""
-        You are an AI assistant specialized in eCommerce support. Analyze the following chat history and the current user query to determine the following:
-
-        1. `is_order_inquiry`: Set this to True **only if** the query is asking for information specific to the status, modification, or details of a particular order (e.g., order status, delivery status, or product-related issues in a specific order). 
-        
-            If the query is about general processes or policies (e.g., "How can I cancel my order?" or "What is your return policy?") even if an order number is mentioned, set this to False. Focus on the intent of the query—if the user is asking about a process that can be answered through general policy or FAQ documentation, set this to False.
-            
-            If the query is related to an order, set `is_checkout_inquiry` to False.  
-        
-        2. `is_checkout_inquiry`: Set this to True if the query is asking about items present in the user's abandoned checkout (e.g., "What items are in my checkout?" or "Can you apply a discount to my checkout items?"). 
-            
-            If the query is related to an abandoned checkout, set `is_order_inquiry` to False.
-            
-        3. Ensure that **only one of** `is_order_inquiry` or `is_checkout_inquiry` can be True at a time. If one is True, the other must be False.
-        
-        4. `is_product_inquiry`: Set this to True if the query asks about product details, features, availability, or recommendations (e.g., "What are the features of this product?" or "Tell me about the products in my checkout."). Both `is_product_inquiry` and `is_checkout_inquiry` can be True if the user is asking for product information related to their abandoned checkout.
-
-        5. `extracted_order_numbers`: Extract specific order number(s) only if `is_order_inquiry` is True. If `is_order_inquiry` is False, return an empty list even if order numbers are mentioned in the query.
-
-        Chat history: {chat_history}
-
-        User query: {query}
-        
-        Return only a valid JSON object, strictly formatted as follows:
-
-        ```json
-        {{
-            "is_order_inquiry": <True or False>,
-            "is_checkout_inquiry": <True or False>,
-            "is_product_inquiry": <True or False>,
-            "extracted_order_numbers": [<List of strings representing order numbers>]
-        }}
-        ```
-
-        Your response **must only** contain the JSON object. Avoid any extra text, comments, explanations, or markdown formatting around the output.
-        """,
-        input_variables=["chat_history", "query"],
-        #partial_variables={"format_instructions": parser.get_format_instructions()},
-    )
+            5. `extracted_order_numbers`: Extract specific order number(s) only if `is_order_inquiry` is True. If `is_order_inquiry` is False, return an empty list even if order numbers are mentioned in the query.
     
-    # Combine history and current query for complete context
-    chat_history_str = "\n".join([f"{speaker}: {content}" for speaker, content in chat_history])
-    chain = prompt | model | parser
-    response = chain.invoke({"chat_history" : chat_history_str, "query": query})
-    user_query_data = UserQuery(**response)
-    return user_query_data
+            Chat history: {chat_history}
+    
+            User query: {query}
+            
+            Your response **must** be a valid JSON object **without any extra characters**, comments, explanations, or backticks. Ensure the output is a plain JSON string with no formatting errors. The JSON format should be:
+
+            {{
+                "is_order_inquiry": <True or False>,
+                "is_checkout_inquiry": <True or False>,
+                "is_product_inquiry": <True or False>,
+                "extracted_order_numbers": [<List of strings representing order numbers>]
+            }}
+    
+            Only output the JSON string with no additional text or formatting.
+            """,
+            input_variables=["chat_history", "query"],
+            #partial_variables={"format_instructions": parser.get_format_instructions()},
+        )
+        
+        # Combine history and current query for complete context
+        chat_history_str = "\n".join([f"{speaker}: {content}" for speaker, content in chat_history])
+        
+        chain = prompt | model
+        response = chain.invoke({"chat_history" : chat_history_str, "query": query})
+        
+        #Extract json and remove any extra chars if any
+        output_str = response.to_string()
+        start = output_str.find('{')
+        end = output_str.find('}')+1
+        output_str_final = output_str[start:end]
+        return parser.parse(output_str_final)
    
 
 @traceable  # Auto-trace this function
@@ -172,19 +172,24 @@ def shopify_result(request_data):
     # Step 4: Create the system prompt for the assistant
     system_prompt = """
         You are an AI assistant specialized in eCommerce support. You will be provided with context regarding eCommerce products, user orders, and abandoned checkouts. Based on this context, you need to respond to user queries with precise and accurate information.
-        This chat is focused on eCommerce customer support. Please answer questions only related to this domain.
-        If a question falls outside the eCommerce support domain, please respond with: 'I can only assist with questions related to eCommerce customer support.'
+        This chat is focused on eCommerce customer support.
+        
+        If a user begins with a greeting (e.g., 'hello', 'hi', 'how are you'), respond politely with a greeting in return, such as:
+        - "Hello, how can I help you?"
+        - "Hi there, how can I assist you today?"
+        
+        If a question falls outside the eCommerce support domain (and is not a greeting), please respond with: 'I can only assist with questions related to eCommerce customer support.'
         
         ### Instructions:
         
         1. **Checkout Data**:
             - Always prioritize the "Checkout Data" when answering queries related to items in the user's checkout.
-            - If a user asks about what is in their checkout, reference only the items listed in the "Checkout Data". 
+            - When a user asks about what product is in their checkout, **match the product in the "Checkout Data" with the product in the "Products Data" using unique identifiers**, such as the `item_variant_id`.
+            - Use the matched product from the "Products Data" to provide additional details such as specifications, pricing, and availability.
         
         2. **Product Queries**:
-            - For queries such as "Which product is in my checkout?", first extract the product(s) listed in the "Checkout Data".
-            - After identifying the product(s) from the "Checkout Data", refer to the "Products Data" to provide detailed information about those specific items.
-            - Ensure to mention relevant details such as specifications, features, pricing, and availability for the identified product(s).
+            - Provide detailed information about products listed in the "Products Data" when the query is about products in general, or when there is no matching checkout item.
+            - For queries like "Which product is in my checkout?", first match the product using the unique identifier from the "Checkout Data", and then provide detailed information from the "Products Data".
         
         3. **Order Queries**:
             - Retrieve and summarize order details based on the "Orders Data", such as order status, tracking information, estimated delivery times, and order history.
@@ -201,10 +206,12 @@ def shopify_result(request_data):
           - **Products Data**: General information about available products.
           - **Orders Data**: Information about the user’s order history and status.
         
-        - **Specific Responses**: When addressing queries about the items in the checkout, focus solely on the "Checkout Data". 
-          - For example, if asked, "Which product is in my checkout?", first extract the product from the "Checkout Data" and then provide detailed information using the "Products Data".
+        - **Matching Process**: For queries like "Which product is in my checkout?":
+          - First, extract the product details from the "Checkout Data".
+          - Use the `item_variant_id` or a similar unique identifier to match the product in the "Products Data".
+          - Once the product is matched, provide detailed information about that product from the "Products Data".
         
-        - **Avoid Assumptions**: Do not make assumptions based on the order or presence of products in "Products Data". Always reference the "Checkout Data" specifically when it is relevant to the user's query.
+        - **Avoid Assumptions**: Do not make assumptions based on the order or presence of products in "Products Data". Always match products based on the provided identifiers.
         
         ### Response Guidelines:
         
@@ -226,7 +233,9 @@ def shopify_result(request_data):
         
         Use the above Context and Instructions and Response Guidelines to provide accurate and helpful responses to user queries.
         Please answer the user queries based solely on the provided context. Do not include any information outside of this context.
-        """
+    """
+
+
     
     """
     chat_history = [('human', 'User Query'), ('ai', 'AI response'), ('human', 'Tell me the different iphone available to you and features provided.'), ('human', 'None')]

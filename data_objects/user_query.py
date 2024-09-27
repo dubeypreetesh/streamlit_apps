@@ -9,9 +9,6 @@ from pydantic import BaseModel, Field, root_validator
 from utils import llm_utils
 from dotenv import load_dotenv, find_dotenv
 import os
-from langchain_core.output_parsers.base import BaseOutputParser
-import json
-from langchain_core.exceptions import OutputParserException
 
 _ = load_dotenv(find_dotenv())  # read local .env file
 
@@ -51,38 +48,10 @@ class UserQuery(BaseModel):
         return values
     """
     
-class CustomJSONOutputParser(BaseOutputParser):
-    def parse(self, text: str) -> dict:
-        try:
-            # Clean the response text by removing unnecessary ```json or other extraneous characters
-            clean_text = self.clean_and_parse_json(text)
-            
-            # Parse the cleaned JSON string
-            return json.loads(clean_text)
-        except json.JSONDecodeError as e:
-            raise OutputParserException(f"Failed to parse output as valid JSON: {str(e)}")
-    
-    def clean_and_parse_json(self, text: str) -> str:
-        # Check if the response starts with ```json or similar patterns
-        if text.startswith("```json."):
-            # Strip the backticks and "json" identifier
-            text = text.strip("```json.").strip("```")
-        elif text.startswith("```json"):
-            # Strip the backticks and "json" identifier
-            text = text.strip("```json").strip("```")
-        elif text.startswith("```"):
-            # If it starts with just backticks, strip them too
-            text = text.strip("```")
-        
-        # Remove any trailing or leading whitespace
-        return text.strip()
-
-
 def test_pydantic(query: str, chat_history: list):  
     try: 
         # Set up a parser + inject instructions into the prompt template.
-        #parser = PydanticOutputParser(pydantic_object=UserQuery)
-        parser = CustomJSONOutputParser()
+        parser = PydanticOutputParser(pydantic_object=UserQuery)
         
         # Define the prompt with clear instructions
         prompt = PromptTemplate(
@@ -109,18 +78,16 @@ def test_pydantic(query: str, chat_history: list):
     
             User query: {query}
             
-            Your response **must** be a valid JSON object in the following format:
+            Your response **must** be a valid JSON object **without any extra characters**, comments, explanations, or backticks. Ensure the output is a plain JSON string with no formatting errors. The JSON format should be:
 
-            ```json
             {{
                 "is_order_inquiry": <True or False>,
                 "is_checkout_inquiry": <True or False>,
                 "is_product_inquiry": <True or False>,
                 "extracted_order_numbers": [<List of strings representing order numbers>]
             }}
-            ```
-
-            Ensure your response is strictly formatted as a JSON object with no additional comments, text, or explanation.
+    
+            Only output the JSON string with no additional text or formatting.
             """,
             input_variables=["chat_history", "query"],
             #partial_variables={"format_instructions": parser.get_format_instructions()},
@@ -130,13 +97,20 @@ def test_pydantic(query: str, chat_history: list):
         chat_history_str = "\n".join([f"{speaker}: {content}" for speaker, content in chat_history])
         
         model = llm_utils.get_chat_model(model_name="gpt-4o-mini", temperature=0, openai_api_key=os.environ['OPENAI_API_KEY'])
-        chain = prompt | model | parser
-        return chain.invoke({"chat_history" : chat_history_str, "query": query})
+        chain = prompt | model
+        response = chain.invoke({"chat_history" : chat_history_str, "query": query})
+        
+        #Extract json and remove any extra chars if any
+        output_str = response.to_string()
+        start = output_str.find('{')
+        end = output_str.find('}')+1
+        output_str_final = output_str[start:end]
+        return parser.parse(output_str_final)
     except Exception as e:
         print(f"Error : {e}")
 
 
-
+import re
 if __name__ == '__main__':
     # Sample chat history
     chat_history = [
@@ -154,7 +128,8 @@ if __name__ == '__main__':
             "extracted_order_numbers": []
         }
         ```"""
-    text = text.strip("```json").strip("```")
-    print(text)
+    start = text.find('{')
+    end = text.find('}')+1
+    print(text[start:end])
     
     
