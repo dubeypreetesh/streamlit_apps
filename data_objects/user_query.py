@@ -64,8 +64,8 @@ def test_pydantic(query: str, chat_history: list):
                 
                 If the query is related to an order, set `is_checkout_inquiry` to False.  
             
-            2. `is_checkout_inquiry`: Set this to True if the query is asking about items present in the user's abandoned checkout (e.g., "What items are in my checkout?" or "Can you apply a discount to my checkout items?"). 
-                
+            2. `is_checkout_inquiry`: Set this to True if the query is asking about items present in the user's abandoned checkout (e.g., "What items are in my checkout?" or "Can you apply a discount to my checkout items?"). **If the user is asking about products in their checkout, both `is_checkout_inquiry` and `is_product_inquiry` should be set to True.**
+    
                 If the query is related to an abandoned checkout, set `is_order_inquiry` to False.
                 
             3. Ensure that **only one of** `is_order_inquiry` or `is_checkout_inquiry` can be True at a time. If one is True, the other must be False.
@@ -93,15 +93,15 @@ def test_pydantic(query: str, chat_history: list):
             #partial_variables={"format_instructions": parser.get_format_instructions()},
         )
         
+        model = llm_utils.get_chat_model(model_name="gpt-4o-mini", temperature=0, openai_api_key=os.environ['OPENAI_API_KEY'])
+        
         # Combine history and current query for complete context
         chat_history_str = "\n".join([f"{speaker}: {content}" for speaker, content in chat_history])
         
-        model = llm_utils.get_chat_model(model_name="gpt-4o-mini", temperature=0, openai_api_key=os.environ['OPENAI_API_KEY'])
         chain = prompt | model
         response = chain.invoke({"chat_history" : chat_history_str, "query": query})
-        
         #Extract json and remove any extra chars if any
-        output_str = response.to_string()
+        output_str = response.content
         start = output_str.find('{')
         end = output_str.find('}')+1
         output_str_final = output_str[start:end]
@@ -118,8 +118,10 @@ if __name__ == '__main__':
         ("assistant", "Could you kindly provide the order number(s) related to your query so I can assist you better?")
     ]
     
-    #response = test_pydantic(chat_history=chat_history, query="Tell me more about items present in my abandon checkout?")
-    #print(f"response : {response}")
+    response = test_pydantic(chat_history=chat_history, query="Tell me more about items present in my abandon checkout?")
+    print(f"response : {response}")
+    
+    
     text ="""```json
         {
             "is_order_inquiry": True,
@@ -130,6 +132,6 @@ if __name__ == '__main__':
         ```"""
     start = text.find('{')
     end = text.find('}')+1
-    print(text[start:end])
+    #print(text[start:end])
     
     

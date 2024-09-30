@@ -152,7 +152,11 @@ def shopify_result(request_data):
         else:
             return "Could you kindly provide the checkout details related to your query so I can assist you better?"
     if is_product_inquiry:
-        product_docs = retriever.invoke(input=question)
+        if is_checkout_inquiry and checkout_data:
+            input = f"User Query : \n\n{question}\n\nCheckout Data: \n\n{checkout_data}"
+        else:
+            input=question
+        product_docs = retriever.invoke(input=input)
         product_docs_str = "\n".join(doc.page_content for doc in product_docs)
         context_list.append(f"Products Data : \n\n{product_docs_str}")
     if is_order_inquiry:
@@ -186,6 +190,7 @@ def shopify_result(request_data):
             - When a user asks about the product in their checkout, **you MUST match the product in the "Checkout Data" with the corresponding product in the "Products Data" using the `item_variant_id` field**. 
             - Use the `item_variant_id` to precisely identify the product variant in both sections.
             - Once you find the matching product in "Products Data" using `item_variant_id`, use that information to provide detailed product descriptions, features, specifications, and pricing.
+            - **If a user asks about discounts** (e.g., "Is there any discount available for this checkout?"), check for discounts in the "Checkout Data" and respond accordingly.
         
         2. **Product Queries**:
             - If a query is about products in general, answer based on the "Products Data" without relying on the checkout context. 
@@ -197,7 +202,8 @@ def shopify_result(request_data):
             - Handle queries about order modifications, cancellations, returns, and refunds based solely on the "Orders Data."
         
         4. **General eCommerce Support**:
-            - Assist with account-related inquiries, including account settings, password resets, and payment methods.
+            - Assist with account-related inquiries, including account settings, password resets, and payment methods.            
+            - **Answer queries about discounts** for both products and checkouts, when relevant. If discounts are available in the "Checkout Data" or "Products Data," provide this information in your response.
             - Address any issues or concerns raised by the user in a clear and empathetic manner.
         
         ### Important Guidelines for Context Handling:
@@ -212,6 +218,8 @@ def shopify_result(request_data):
             - Then, locate the same `item_variant_id` in the "Products Data" to retrieve full product details.
             - Do not assume the first product in the list is correct — the answer must be based on matching `item_variant_id` exactly.
             - **Only after confirming this match** should you provide the user with details from "Products Data".
+            
+        - **Discount Queries**: If a user asks about discounts, check for discount information in the "Checkout Data" (e.g., `checkout_total_discounts`) or "Products Data" (e.g., product promotions or discounts). Ensure that your response reflects this information accurately.
         
         - **Avoid Assumptions**: Do not make assumptions based on the order or presence of products in "Products Data". Always match products based on the provided `item_variant_id`.
         
@@ -230,6 +238,8 @@ def shopify_result(request_data):
         - "What items are in my abandoned checkout?"
         - "Can you help me complete my abandoned purchase?"
         - "Which product is in my checkout?"
+        - "Is there any discount available for this checkout?"
+        - "Is there any discount available?"
         
         Context: {context}
         
@@ -252,26 +262,18 @@ def shopify_result(request_data):
     # Step 5: Build the conversation prompt using ChatPromptTemplate
     prompt = ChatPromptTemplate([
             ("system", system_prompt),
-            *request_data["messages"][-6:],
+            #*request_data["messages"][-6:],
             ("human", "{input}")
         ])
     
-    # Step 6: Create the question-answer chain and retrieve the response
+    # Use your custom context and pass it to the LLM
+    question_answer_chain = prompt | llm
     
-    # We assume 'context' is calculated above based on the order query or product retrieval
-    question_answer_chain = create_stuff_documents_chain(llm, prompt)
-    
-    # Modify system prompt to include the calculated context explicitly
-    chain = create_retrieval_chain(retriever, question_answer_chain)
-    
-    # Pass 'context' explicitly in the chain.invoke method
-    response = chain.invoke({"input": question, "context" : context})
-    
-    answer = response['answer']
-    return answer
+    response = question_answer_chain.invoke({"input": question, "context": context})
+    print(f"context : {context}")
+    #print(f"response : {response}")
+    return response["text"]
 
-    # response = chain.stream({"input": question})
-    # return response
     
 @traceable  # Auto-trace this function
 def shopify_result_old(request_data):
