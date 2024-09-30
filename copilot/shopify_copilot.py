@@ -171,7 +171,6 @@ def shopify_result(request_data):
             return "Could you kindly provide the order number(s) related to your query so I can assist you better?"
     
     context = "\n\n".join(context_list)
-    print(f"Context : {context}")
     # Step 4: Create the system prompt for the assistant
     system_prompt = """
         You are an AI assistant specialized in eCommerce support. You will be provided with context regarding eCommerce products, user orders, and abandoned checkouts. Based on this context, you need to respond to user queries with precise and accurate information.
@@ -270,9 +269,11 @@ def shopify_result(request_data):
     question_answer_chain = prompt | llm
     
     response = question_answer_chain.invoke({"input": question, "context": context})
-    print(f"context : {context}")
+    print(f"type of response : {type(response)}")
+    print(f"response : {response}")
+    #print(f"context : {context}")
     #print(f"response : {response}")
-    return response["text"]
+    return None
 
     
 @traceable  # Auto-trace this function
