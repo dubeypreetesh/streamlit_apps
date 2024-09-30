@@ -176,6 +176,9 @@ def shopify_result(request_data):
         else: # If order numbers are not present
             # Step 3b: Ask user for order numbers
             return "Could you kindly provide the order number(s) related to your query so I can assist you better?"
+        
+    if not context_list and checkout_data:
+        context_list.append(f"Checkout Data: \n\n{checkout_data}")
     
     context = "\n\n".join(context_list)
     # Step 4: Create the system prompt for the assistant
