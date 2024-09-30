@@ -136,7 +136,7 @@ def shopify_result(request_data):
     
     retriever = vectorstore.as_retriever()
     
-    CHAT_HISTORY_LENGTH = 8
+    CHAT_HISTORY_LENGTH = 10
     user_query_pydantic = get_user_query_pydantic(chat_history=request_data["messages"][-CHAT_HISTORY_LENGTH:], query=question, model=llm)
     print(f"user_query_pydantic : {user_query_pydantic}")
     is_order_inquiry = user_query_pydantic.is_order_inquiry
