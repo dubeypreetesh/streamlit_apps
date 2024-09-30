@@ -74,8 +74,8 @@ def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -
                 
                 If the query is related to an order, set `is_checkout_inquiry` to False.  
             
-            2. `is_checkout_inquiry`: Set this to True if the query is asking about items present in the user's abandoned checkout (e.g., "What items are in my checkout?" or "Can you apply a discount to my checkout items?"). 
-                
+            2. `is_checkout_inquiry`: Set this to True if the query is asking about items present in the user's abandoned checkout (e.g., "What items are in my checkout?" or "Can you apply a discount to my checkout items?"). **If the user is asking about products in their checkout, both `is_checkout_inquiry` and `is_product_inquiry` should be set to True.**
+    
                 If the query is related to an abandoned checkout, set `is_order_inquiry` to False.
                 
             3. Ensure that **only one of** `is_order_inquiry` or `is_checkout_inquiry` can be True at a time. If one is True, the other must be False.
