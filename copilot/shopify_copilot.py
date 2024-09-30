@@ -74,17 +74,19 @@ def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -
                 
                 If the query is related to an order, set `is_checkout_inquiry` to False.  
             
-            2. `is_checkout_inquiry`: Set this to True if the query is asking about items present in the user's abandoned checkout (e.g., "What items are in my checkout?" or "Can you apply a discount to my checkout items?"). **If the user is asking about products in their checkout, both `is_checkout_inquiry` and `is_product_inquiry` should be set to True.**
+            2. `is_checkout_inquiry`: Set this to True **if the query refers to any items, discounts, coupon codes or other details about the user's checkout**, including abandoned checkouts. 
             
-                **If the user is asking about products or discounts in their checkout, both `is_checkout_inquiry` and `is_product_inquiry` must be set to True.** 
+                If the user mentions products in their checkout, discounts, or asks about any actions specific to their checkout (e.g., applying discounts, checking items in their checkout), set this to True. 
     
-                If the query is related to an abandoned checkout, set `is_order_inquiry` to False.
-                
-            3. Ensure that **only one of** `is_order_inquiry` or `is_checkout_inquiry` can be True at a time. If one is True, the other must be False.
+                For example, if the user asks "What items are in my checkout?" or "Are there any discounts on my checkout items?" both `is_checkout_inquiry` and `is_product_inquiry` should be set to True.
+        
+                If `is_checkout_inquiry` is True, `is_order_inquiry` must be set to False.                            
             
-            4. `is_product_inquiry`: Set this to True if the query asks about product details, features, availability, or recommendations (e.g., "What are the features of this product?" or "Tell me about the products in my checkout.").
+            3. `is_product_inquiry`: Set this to True if the query asks about product details, features, availability, or recommendations (e.g., "What are the features of this product?" or "Tell me about the products in my checkout.").
             
                 **Both `is_product_inquiry` and `is_checkout_inquiry` should be True if the query asks about products or discounts related to the user's abandoned checkout.**
+                
+            4. Ensure that **only one of** `is_order_inquiry` or `is_checkout_inquiry` can be True at a time. If one is True, the other must be False.
     
             5. `extracted_order_numbers`: Extract specific order number(s) only if `is_order_inquiry` is True. If `is_order_inquiry` is False, return an empty list even if order numbers are mentioned in the query.
     
