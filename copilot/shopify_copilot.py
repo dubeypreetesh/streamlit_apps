@@ -136,7 +136,8 @@ def shopify_result(request_data):
     
     retriever = vectorstore.as_retriever()
     
-    user_query_pydantic = get_user_query_pydantic(chat_history=request_data["messages"][-6:], query=question, model=llm)
+    CHAT_HISTORY_LENGTH = 8
+    user_query_pydantic = get_user_query_pydantic(chat_history=request_data["messages"][-CHAT_HISTORY_LENGTH:], query=question, model=llm)
     print(f"user_query_pydantic : {user_query_pydantic}")
     is_order_inquiry = user_query_pydantic.is_order_inquiry
     is_checkout_inquiry = user_query_pydantic.is_checkout_inquiry
@@ -261,7 +262,7 @@ def shopify_result(request_data):
     # Step 5: Build the conversation prompt using ChatPromptTemplate
     prompt = ChatPromptTemplate([
             ("system", system_prompt),
-            #*request_data["messages"][-6:],
+            *request_data["messages"][-CHAT_HISTORY_LENGTH:],
             ("human", "{input}")
         ])
     
