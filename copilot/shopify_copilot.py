@@ -269,11 +269,7 @@ def shopify_result(request_data):
     question_answer_chain = prompt | llm
     
     response = question_answer_chain.invoke({"input": question, "context": context})
-    print(f"type of response : {type(response)}")
-    print(f"response : {response}")
-    #print(f"context : {context}")
-    #print(f"response : {response}")
-    return None
+    return response.content
 
     
 @traceable  # Auto-trace this function
