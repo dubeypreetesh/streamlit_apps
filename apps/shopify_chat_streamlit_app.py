@@ -149,6 +149,6 @@ if user_input := st.chat_input("What's your query?"):
         try:
             send_chat_messages(api_url=st.secrets["shopify_credentials"]["send_message_api"], token=token, user_input=user_input, ai_message=ai_message)
         except Exception as e:
-            pass
+            print(f"Error : {e}")
         
         
