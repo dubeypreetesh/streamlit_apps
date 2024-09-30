@@ -75,12 +75,16 @@ def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -
                 If the query is related to an order, set `is_checkout_inquiry` to False.  
             
             2. `is_checkout_inquiry`: Set this to True if the query is asking about items present in the user's abandoned checkout (e.g., "What items are in my checkout?" or "Can you apply a discount to my checkout items?"). **If the user is asking about products in their checkout, both `is_checkout_inquiry` and `is_product_inquiry` should be set to True.**
+            
+                **If the user is asking about products or discounts in their checkout, both `is_checkout_inquiry` and `is_product_inquiry` must be set to True.** 
     
                 If the query is related to an abandoned checkout, set `is_order_inquiry` to False.
                 
             3. Ensure that **only one of** `is_order_inquiry` or `is_checkout_inquiry` can be True at a time. If one is True, the other must be False.
             
-            4. `is_product_inquiry`: Set this to True if the query asks about product details, features, availability, or recommendations (e.g., "What are the features of this product?" or "Tell me about the products in my checkout."). Both `is_product_inquiry` and `is_checkout_inquiry` can be True if the user is asking for product information related to their abandoned checkout.
+            4. `is_product_inquiry`: Set this to True if the query asks about product details, features, availability, or recommendations (e.g., "What are the features of this product?" or "Tell me about the products in my checkout.").
+            
+                **Both `is_product_inquiry` and `is_checkout_inquiry` should be True if the query asks about products or discounts related to the user's abandoned checkout.**
     
             5. `extracted_order_numbers`: Extract specific order number(s) only if `is_order_inquiry` is True. If `is_order_inquiry` is False, return an empty list even if order numbers are mentioned in the query.
     
@@ -205,6 +209,7 @@ def shopify_result(request_data):
             - Assist with account-related inquiries, including account settings, password resets, and payment methods.            
             - **Answer queries about discounts** for both products and checkouts, when relevant. If discounts are available in the "Checkout Data" or "Products Data," provide this information in your response.
             - Address any issues or concerns raised by the user in a clear and empathetic manner.
+            - **Avoid prompting the user with phrases like 'If you have any other questions or need further assistance, feel free to ask!' unless the user explicitly asks for such guidance.**
         
         ### Important Guidelines for Context Handling:
         

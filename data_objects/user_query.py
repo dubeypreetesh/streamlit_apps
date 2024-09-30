@@ -114,8 +114,14 @@ import re
 if __name__ == '__main__':
     # Sample chat history
     chat_history = [
-        ("user", "what is the status of my order?"),
-        ("assistant", "Could you kindly provide the order number(s) related to your query so I can assist you better?")
+        ("user", "hi"),
+        ("assistant", "Hi there, how can I assist you today?"),
+        ("user", "I need details of the item of my checkout."),
+        ("assistant", "The item in your checkout is the **Apple iPad Pro 11″ (4th Generation)**. Here are the details:\n\n- **Model**: Apple iPad Pro 11″ (4th Generation)\n- **Chip**: M2 chip\n- **Display**: Liquid Retina Display\n- **Storage**: 128GB\n- **Connectivity**: Wi-Fi 6E\n- **Cameras**: 12MP front camera, 12MP and 10MP back cameras\n- **Face ID**: Yes\n- **Battery Life**: All-Day Battery Life\n- **Price**: ₹79,900.00\n\nFor more information, you can view the product [here](https://development-ongraph.myshopify.com/products/apple-ipad-pro-11-4th-generation-with-m2-chip-liquid-retina-display-128gb-wi-fi-6e-12mp-front-12mp-and-10mp-back-cameras-face-id-all-day-battery-life-space-grey).\n\nIf you have any other questions or need further assistance, feel free to ask!"),
+        ("user", "was there any discount applied?"),
+        ("assistant", "Yes, there was a discount applied to your checkout. The total discount amount is ₹15,980.00. \n\nIf you have any more questions or need further assistance, feel free to ask!"),
+        ("user", "are there any discount coupons available?"),
+        ("assistant", "I can only assist with questions related to eCommerce customer support.")        
     ]
     
     response = test_pydantic(chat_history=chat_history, query="Tell me more about items present in my abandon checkout?")
