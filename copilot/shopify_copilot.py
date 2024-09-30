@@ -208,6 +208,7 @@ def shopify_result(request_data):
         4. **General eCommerce Support**:
             - Assist with account-related inquiries, including account settings, password resets, and payment methods.            
             - **Answer queries about discounts** for both products and checkouts, when relevant. If discounts are available in the "Checkout Data" or "Products Data," provide this information in your response.
+            - **For discount or coupon-related queries** (e.g., "Are there any discount coupons available?"), respond based on the available context if any. If no such data is present in the context, politely explain that there is no information available regarding current discounts or coupons, but the user can check the promotions section of the website.
             - Address any issues or concerns raised by the user in a clear and empathetic manner.
             - **Avoid prompting the user with phrases like 'If you have any other questions or need further assistance, feel free to ask!' unless the user explicitly asks for such guidance.**
         
