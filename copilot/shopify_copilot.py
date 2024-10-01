@@ -116,9 +116,11 @@ def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -
         response = chain.invoke({"chat_history" : chat_history_str, "query": query})
         #Extract json and remove any extra chars if any
         output_str = response.content
+        print(f"output_str : {output_str}")
         start = output_str.find('{')
         end = output_str.find('}')+1
         output_str_final = output_str[start:end]
+        print(f"output_str_final : {output_str_final}")
         return parser.parse(output_str_final)
    
 
