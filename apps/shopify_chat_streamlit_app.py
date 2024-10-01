@@ -139,15 +139,16 @@ if user_input := st.chat_input("What's your query?"):
         
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
+            ai_message = None
             try:
                 ai_message = shopify_copilot.fetch_result(token=token, token_secret=st.secrets["shopify_credentials"]["jwt_secret"] ,
                             question=user_input, openai_api_key=openai_api_key, messages=create_placeholder_messages(st.session_state.messages),
                             checkout_data=st.session_state.checkout_data, chroma_host=st.secrets["chroma_credentials"]["host"], chroma_port=st.secrets["chroma_credentials"]["port"], 
                             get_orders_api_url=st.secrets["shopify_credentials"]["get_orders_api"])
-                st.markdown(ai_message)
             except Exception as e:
-                st.markdown(STANDARD_ERROR_MESSAGE)
-        
+                ai_message = STANDARD_ERROR_MESSAGE
+                
+            st.markdown(ai_message)
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": ai_message})    
         try:
