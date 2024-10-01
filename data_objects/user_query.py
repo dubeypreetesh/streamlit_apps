@@ -58,21 +58,27 @@ def test_pydantic(query: str, chat_history: list):
             template="""
             You are an AI assistant specialized in eCommerce support. Analyze the following chat history and the current user query to determine the following:
     
-            1. `is_order_inquiry`: Set this to True **only if** the query is asking for information specific to the status, modification, or details of a particular order (e.g., order status, delivery status, or product-related issues in a specific order). 
+            1. `is_order_inquiry`: Set this to `true` **only if** the query is asking for information specific to the status, modification, or details of a particular order (e.g., order status, delivery status, or product-related issues in a specific order). 
             
-                If the query is about general processes or policies (e.g., "How can I cancel my order?" or "What is your return policy?") even if an order number is mentioned, set this to False. Focus on the intent of the query—if the user is asking about a process that can be answered through general policy or FAQ documentation, set this to False.
+                If the query is about general processes or policies (e.g., "How can I cancel my order?" or "What is your return policy?") even if an order number is mentioned, set this to `false`. Focus on the intent of the query—if the user is asking about a process that can be answered through general policy or FAQ documentation, set this to `false`.
                 
-                If the query is related to an order, set `is_checkout_inquiry` to False.  
+                If the query is related to an order, set `is_checkout_inquiry` to `false`. 
             
-            2. `is_checkout_inquiry`: Set this to True if the query is asking about items present in the user's abandoned checkout (e.g., "What items are in my checkout?" or "Can you apply a discount to my checkout items?"). **If the user is asking about products in their checkout, both `is_checkout_inquiry` and `is_product_inquiry` should be set to True.**
+            2. `is_checkout_inquiry`: Set this to `true` **if the query refers to any items, discounts, coupon codes or other details about the user's checkout**, including abandoned checkouts. 
+            
+                If the user mentions products in their checkout, discounts, or asks about any actions specific to their checkout (e.g., applying discounts, checking items in their checkout), set this to `true`. 
     
-                If the query is related to an abandoned checkout, set `is_order_inquiry` to False.
+                For example, if the user asks "What items are in my checkout?" or "Are there any discounts on my checkout items?" both `is_checkout_inquiry` and `is_product_inquiry` should be set to `true`.
+        
+                If `is_checkout_inquiry` is `true`, `is_order_inquiry` must be set to `false`.                            
+            
+            3. `is_product_inquiry`: Set this to `true` if the query asks about product details, features, availability, or recommendations (e.g., "What are the features of this product?" or "Tell me about the products in my checkout.").
+            
+                **Both `is_product_inquiry` and `is_checkout_inquiry` should be `true` if the query asks about products or discounts related to the user's abandoned checkout.**
                 
-            3. Ensure that **only one of** `is_order_inquiry` or `is_checkout_inquiry` can be True at a time. If one is True, the other must be False.
-            
-            4. `is_product_inquiry`: Set this to True if the query asks about product details, features, availability, or recommendations (e.g., "What are the features of this product?" or "Tell me about the products in my checkout."). Both `is_product_inquiry` and `is_checkout_inquiry` can be True if the user is asking for product information related to their abandoned checkout.
+            4. Ensure that **only one of** `is_order_inquiry` or `is_checkout_inquiry` can be `true` at a time. If one is `true`, the other must be `false`.
     
-            5. `extracted_order_numbers`: Extract specific order number(s) only if `is_order_inquiry` is True. If `is_order_inquiry` is False, return an empty list even if order numbers are mentioned in the query.
+            5. `extracted_order_numbers`: Extract specific order number(s) only if `is_order_inquiry` is `true`. If `is_order_inquiry` is `false`, return an empty list even if order numbers are mentioned in the query.
     
             Chat history: {chat_history}
     
@@ -81,9 +87,9 @@ def test_pydantic(query: str, chat_history: list):
             Your response **must** be a valid JSON object **without any extra characters**, comments, explanations, or backticks. Ensure the output is a plain JSON string with no formatting errors. The JSON format should be:
 
             {{
-                "is_order_inquiry": <True or False>,
-                "is_checkout_inquiry": <True or False>,
-                "is_product_inquiry": <True or False>,
+                "is_order_inquiry": <true or false>,
+                "is_checkout_inquiry": <true or false>,
+                "is_product_inquiry": <true or false>,
                 "extracted_order_numbers": [<List of strings representing order numbers>]
             }}
     
