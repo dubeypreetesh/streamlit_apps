@@ -58,6 +58,28 @@ def clean_and_parse_json(response: str):
         return json.loads(json_str)
     except json.JSONDecodeError as e:
         raise OutputParserException(f"Failed to parse JSON response: {e}")
+    
+if __name__ == '__main__':
+    # Set up a parser + inject instructions into the prompt template.
+    parser = PydanticOutputParser(pydantic_object=UserQuery)
+    output_str = """
+        {
+            "is_order_inquiry": True,
+            "is_checkout_inquiry": False,
+            "is_product_inquiry": False,
+            "extracted_order_numbers": []
+        }
+    """
+    
+    start = output_str.find('{')
+    end = output_str.find('}')+1
+    output_str_final = output_str[start:end]
+    print(f"output_str_final : {output_str_final}")
+    try:
+        user_query = parser.parse(output_str_final)
+        print(f"user_query : {user_query}")
+    except Exception as e:
+        print(f"Error : {e}")
 
 def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -> UserQuery:   
         # Set up a parser + inject instructions into the prompt template.
@@ -68,27 +90,27 @@ def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -
             template="""
             You are an AI assistant specialized in eCommerce support. Analyze the following chat history and the current user query to determine the following:
     
-            1. `is_order_inquiry`: Set this to True **only if** the query is asking for information specific to the status, modification, or details of a particular order (e.g., order status, delivery status, or product-related issues in a specific order). 
+            1. `is_order_inquiry`: Set this to `true` **only if** the query is asking for information specific to the status, modification, or details of a particular order (e.g., order status, delivery status, or product-related issues in a specific order). 
             
-                If the query is about general processes or policies (e.g., "How can I cancel my order?" or "What is your return policy?") even if an order number is mentioned, set this to False. Focus on the intent of the query—if the user is asking about a process that can be answered through general policy or FAQ documentation, set this to False.
+                If the query is about general processes or policies (e.g., "How can I cancel my order?" or "What is your return policy?") even if an order number is mentioned, set this to `false`. Focus on the intent of the query—if the user is asking about a process that can be answered through general policy or FAQ documentation, set this to `false`.
                 
-                If the query is related to an order, set `is_checkout_inquiry` to False.  
+                If the query is related to an order, set `is_checkout_inquiry` to `false`. 
             
-            2. `is_checkout_inquiry`: Set this to True **if the query refers to any items, discounts, coupon codes or other details about the user's checkout**, including abandoned checkouts. 
+            2. `is_checkout_inquiry`: Set this to `true` **if the query refers to any items, discounts, coupon codes or other details about the user's checkout**, including abandoned checkouts. 
             
-                If the user mentions products in their checkout, discounts, or asks about any actions specific to their checkout (e.g., applying discounts, checking items in their checkout), set this to True. 
+                If the user mentions products in their checkout, discounts, or asks about any actions specific to their checkout (e.g., applying discounts, checking items in their checkout), set this to `true`. 
     
-                For example, if the user asks "What items are in my checkout?" or "Are there any discounts on my checkout items?" both `is_checkout_inquiry` and `is_product_inquiry` should be set to True.
+                For example, if the user asks "What items are in my checkout?" or "Are there any discounts on my checkout items?" both `is_checkout_inquiry` and `is_product_inquiry` should be set to `true`.
         
-                If `is_checkout_inquiry` is True, `is_order_inquiry` must be set to False.                            
+                If `is_checkout_inquiry` is `true`, `is_order_inquiry` must be set to `false`.                            
             
-            3. `is_product_inquiry`: Set this to True if the query asks about product details, features, availability, or recommendations (e.g., "What are the features of this product?" or "Tell me about the products in my checkout.").
+            3. `is_product_inquiry`: Set this to `true` if the query asks about product details, features, availability, or recommendations (e.g., "What are the features of this product?" or "Tell me about the products in my checkout.").
             
-                **Both `is_product_inquiry` and `is_checkout_inquiry` should be True if the query asks about products or discounts related to the user's abandoned checkout.**
+                **Both `is_product_inquiry` and `is_checkout_inquiry` should be `true` if the query asks about products or discounts related to the user's abandoned checkout.**
                 
-            4. Ensure that **only one of** `is_order_inquiry` or `is_checkout_inquiry` can be True at a time. If one is True, the other must be False.
+            4. Ensure that **only one of** `is_order_inquiry` or `is_checkout_inquiry` can be `true` at a time. If one is `true`, the other must be `false`.
     
-            5. `extracted_order_numbers`: Extract specific order number(s) only if `is_order_inquiry` is True. If `is_order_inquiry` is False, return an empty list even if order numbers are mentioned in the query.
+            5. `extracted_order_numbers`: Extract specific order number(s) only if `is_order_inquiry` is `true`. If `is_order_inquiry` is `false`, return an empty list even if order numbers are mentioned in the query.
     
             Chat history: {chat_history}
     
@@ -97,9 +119,9 @@ def get_user_query_pydantic(chat_history: list, query: str, model: ChatOpenAI) -
             Your response **must** be a valid JSON object **without any extra characters**, comments, explanations, or backticks. Ensure the output is a plain JSON string with no formatting errors. The JSON format should be:
 
             {{
-                "is_order_inquiry": <True or False>,
-                "is_checkout_inquiry": <True or False>,
-                "is_product_inquiry": <True or False>,
+                "is_order_inquiry": <true or false>,
+                "is_checkout_inquiry": <true or false>,
+                "is_product_inquiry": <true or false>,
                 "extracted_order_numbers": [<List of strings representing order numbers>]
             }}
     
