@@ -318,7 +318,7 @@ def shopify_result(request_data):
     """
     question_answer_chain = create_stuff_documents_chain(llm, prompt)
     chain = create_retrieval_chain(retriever, question_answer_chain)
-    response = chain.invoke({"input": question})
+    response = chain.invoke({"input": question, "checkout_data_str" : checkout_data_str})
     print(response)
     answer = response['answer']
     return answer

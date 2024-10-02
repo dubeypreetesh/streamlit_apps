@@ -146,6 +146,7 @@ if user_input := st.chat_input("What's your query?"):
                             checkout_data=st.session_state.checkout_data, chroma_host=st.secrets["chroma_credentials"]["host"], chroma_port=st.secrets["chroma_credentials"]["port"], 
                             get_orders_api_url=st.secrets["shopify_credentials"]["get_orders_api"])
             except Exception as e:
+                print(f"Error : {e}")
                 ai_message = STANDARD_ERROR_MESSAGE
                 
             st.markdown(ai_message)
