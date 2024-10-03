@@ -330,6 +330,7 @@ def shopify_result_old(request_data):
     shop_id = request_data["shop_id"]
     collection_name = request_data["collection_name"]
     openai_api_key = request_data["openai_api_key"]
+    checkout_data = request_data["checkout_data"]
     
     chroma_host = request_data["chroma_host"]
     chroma_port = request_data["chroma_port"]
@@ -342,77 +343,79 @@ def shopify_result_old(request_data):
     vectorstore = Chroma(client=client, collection_name=collection_name, embedding_function=embedding_function)
     
     retriever = vectorstore.as_retriever()
+    checkout_data_str = "Checkout Data : {checkout_data}" if checkout_data else ""
     
+    CHAT_HISTORY_LENGTH = 20
+    chat_history = request_data["messages"][-CHAT_HISTORY_LENGTH:]
+    chat_history_str = "\n".join([f"{speaker}: {content}" for speaker, content in chat_history])
     # Step 2: Determine if the query is order-related
     order_inquiry_prompt = f"""
-        Given the "user_query" below, determine if the query is about an order inquiry. If it is, reply with "Y". If it is not, reply with "N" and nothing else.
+        Given the "user_query" and "chat_history" below, determine if the query is specifically about the user's own order details (e.g., order status, tracking, payment, delivery). 
+        If the query is about products in the order, or about general order information (e.g., how to cancel an order, how refunds work), reply with "N". 
+        Only if the user is inquiring specifically about their placed order (excluding product-related queries), reply with "Y". 
+        Respond with "Y" or "N" only.
+    
+        "chat_history": "{chat_history_str}"
         "user_query": "{question}"
-        """
+    """
+
+
+
     is_order_inquiry = llm_utils.get_completion(prompt=order_inquiry_prompt, temperature=0.0, openai_api_key=openai_api_key)
     
     # Step 3: Handle order-related queries
     if is_order_inquiry == "Y":
-        #retriever.search_kwargs = {"filter": {"user_id": request_data["user_id"]}, "k": 10}
-        # Check if the query contains order number(s)
-        order_number_extraction_prompt = f"""
-            Identify the order number(s) in the user query as a list of **strings**.
-            If there are no order numbers present, reply with an empty list.
-            Ensure that each order number is returned as a string, even if it consists of digits.
-        
-            "user_query": "{question}"
-        """
-
-        extracted_order_numbers = llm_utils.get_completion(prompt=order_number_extraction_prompt, temperature=0.0, openai_api_key=openai_api_key)
-        
-        if extracted_order_numbers:  # If order numbers are present
-            # Call the order API using extracted order numbers
-            order_api_response = get_shopify_orders(shop_id=shop_id, user_id=request_data["user_id"], order_numbers=extracted_order_numbers).json()
-            # Use the order API response as context for RAG query
-            context = f"Order details: {order_api_response}"
-        else: # If order numbers are not present
-            # Step 3b: Ask user for order numbers
-            return "Could you kindly provide the order number(s) related to your query so I can assist you better?"
-    else:
-        # If the query is not about orders, perform a regular RAG query
-        context = retriever.invoke(input=question)
+        retriever.search_kwargs = {"filter": {"user_id": request_data["user_id"]}, "k": 10}
     
     # Step 4: Create the system prompt for the assistant
     system_prompt = """
-    You are an AI assistant specialized in eCommerce support. You will be provided with context regarding eCommerce products and user orders. Based on this context, you need to respond to user queries with precise and accurate information.
-    This chat is focused on eCommerce customer support. Please answer questions only related to this domain.
-    If a question falls outside the eCommerce support domain, please respond with: 'I can only assist with questions related to eCommerce customer support. 
+        You are an AI assistant specialized in eCommerce support. You will be provided with context regarding eCommerce products, 
+        user orders, and abandoned checkouts. Based on this context, you need to respond to user queries with precise and accurate information.
 
-    ### Instructions:
-    
-    1. **Product Queries**:
-        - Provide detailed information about products, including specifications, features, pricing, availability, and user reviews.
-        - Answer any questions related to product comparisons, recommendations, and suitability based on user needs.
-    
-    2. **Order Queries**:
-        - Retrieve and summarize order details such as order status, tracking information, estimated delivery times, and order history.
-        - Handle queries about order modifications, cancellations, returns, and refunds.
-    
-    3. **General eCommerce Support**:
-        - Assist with account-related inquiries, including account settings, password resets, and payment methods.
-        - Address any issues or concerns raised by the user in a clear and empathetic manner.
-    
-    ### Response Guidelines:
-    
-    - **Accuracy**: Ensure all responses are factually correct based on the provided context.
-    - **Clarity**: Provide clear and concise answers.
-    - **Relevance**: Stay focused on the user's query, providing the most relevant information.
-    - **Tone**: Maintain a professional, friendly, and helpful tone.
-    
-    **Sample User Queries**:
-    - "What is the battery life of the Wireless Bluetooth Headphones?"
-    - "Can I change the shipping address for my order 67890?"
-    - "How do I return a product I purchased?"
-    - "What are the reviews like for the Portable Charger?"
-    
-    Context:{context}
-    
-    Use the above Context and Instructions and Response Guidelines to provide accurate and helpful responses to user queries.
-    Please answer the user queries based solely on the provided context. Do not include any information outside of this context.
+        ### Instructions:
+        
+        1. **Product Queries**:
+            - Provide detailed information about products, including specifications, features, pricing, availability, and user reviews.
+            - Answer any questions related to product comparisons, recommendations, and suitability based on user needs.
+        
+        2. **Order Queries**:
+            - Retrieve and summarize order details such as order status, tracking information, estimated delivery times, and order history.
+            - Handle queries about order modifications, cancellations, returns, and refunds.
+            - Use the `item_variant_id` to match products in order with the products in the context.
+        
+        3. **Checkout Queries**:
+            - If checkout information is available, provide details about the items in the user's abandoned checkout.
+            - Use the `item_variant_id` to match products in checkout data with the products in the context.
+        
+        4. **General eCommerce Support**:
+            - Assist with account-related inquiries, including account settings, password resets, and payment methods.
+            - Address any issues or concerns raised by the user in a clear and empathetic manner.
+        
+        ### Context and Matching Logic:
+        - When required to match product information across orders or checkout data, use the common field `item_variant_id` to retrieve and 
+        present relevant product details.
+        
+        ### Response Guidelines:
+        
+        - **Accuracy**: Ensure all responses are factually correct based on the provided context.
+        - **Clarity**: Provide clear and concise answers.
+        - **Relevance**: Stay focused on the user's query, providing the most relevant information.
+        - **Tone**: Maintain a professional, friendly, and helpful tone.
+        - **Greetings**: Respond politely to user greetings like "hello" or "hi," and proceed with the conversation.
+        - **Out-of-Scope Queries**: If the user asks something outside the eCommerce domain or unrelated to the provided context, politely inform them that the system is designed to handle eCommerce-related queries only.
+        
+        **Sample User Queries**:
+        - "What is the battery life of the Wireless Bluetooth Headphones?"
+        - "Can I change the shipping address for my order 67890?"
+        - "What are the items in my abandoned checkout?"
+        - "How do I return a product I purchased?"
+        - "What are the reviews like for the Portable Charger?"
+        
+        Context: {context}, 
+        
+        {checkout_data_str}
+        
+        Use the above Context, Instructions, and Response Guidelines to provide accurate and helpful responses to user queries. Answer solely based on the provided context, and avoid including information outside the given data.
     """
     
     """
@@ -427,7 +430,7 @@ def shopify_result_old(request_data):
     # Step 5: Build the conversation prompt using ChatPromptTemplate
     prompt = ChatPromptTemplate([
             ("system", system_prompt),
-            *request_data["messages"],
+            *chat_history,
             ("human", "{input}")
         ])
     
@@ -440,13 +443,10 @@ def shopify_result_old(request_data):
     chain = create_retrieval_chain(retriever, question_answer_chain)
     
     # Pass 'context' explicitly in the chain.invoke method
-    response = chain.invoke({"input": question, "context" : context})
+    response = chain.invoke({"input": question, "checkout_data_str" : checkout_data_str})
     
     answer = response['answer']
     return answer
-
-    # response = chain.stream({"input": question})
-    # return response
     
 def fetch_website_result(website_domain: str, collection_name: str, question:str, openai_api_key: str, messages: list, chroma_host:str, chroma_port: int): 
     request_data = {"website_domain": website_domain, "collection_name": collection_name, "question": question,
