@@ -33,7 +33,7 @@ def fetch_result(token: str, token_secret: str, question:str, openai_api_key: st
     request_data = {"question": question, "shop_id": decoded_token["shopId"], "user_id": decoded_token["customerId"],
                   "collection_name": decoded_token["collection_name"], "messages": messages, "checkout_data": checkout_data, "openai_api_key": openai_api_key,
                   "chroma_host": chroma_host, "chroma_port": chroma_port, "get_orders_api_url": get_orders_api_url}
-    answer = shopify_result(request_data=request_data)
+    answer = shopify_result_old(request_data=request_data)
     return answer
 
 
