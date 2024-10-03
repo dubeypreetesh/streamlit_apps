@@ -4,9 +4,6 @@ Created on 18 Sept 2024
 @author: dileep sharma
 '''
 import streamlit as st
-from utils import encode_decode_base64
-import json
-
 
 product_page = st.Page("product_ads.py", title="Product List", icon=":material/dashboard:")
 order_page = st.Page("order_ads.py", title="Order List", icon=":material/dashboard:")

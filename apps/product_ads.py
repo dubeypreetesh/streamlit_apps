@@ -16,7 +16,6 @@ from proxy.copilot_proxy import CopilotProxy
 from proxy.facebook_proxy import FacebookProxy
 import streamlit as st
 import sys
-from utils import encode_decode_base64
 from time import time
 
 _ = load_dotenv(find_dotenv())  # read local .env file
@@ -38,6 +37,7 @@ if is_cloud:
     os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["langsmith"]["LANGCHAIN_TRACING_V2"]
     os.environ["LANGCHAIN_API_KEY"] = st.secrets["langsmith"]["LANGCHAIN_API_KEY"]
 # Sample JSON data
+from utils import encode_decode_base64
 
 def getDocument():
     with st.spinner('In progress...'):
