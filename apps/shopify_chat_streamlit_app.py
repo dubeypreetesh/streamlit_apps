@@ -85,6 +85,7 @@ def create_placeholder_messages(messages: list):
     return messages_copy
 
 #App Code Starts here
+STANDARD_ERROR_MESSAGE = "We're sorry, but something didn’t go as planned. Please try again in a little while."
 # Fetch the query parameters
 query_params = st.query_params
 
@@ -93,7 +94,7 @@ token = query_params.get('token')
 
 token_secret = st.secrets["shopify_credentials"]["jwt_secret"]
 decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
-page_title = f"I am Mira - you personal 24/7 Shopping Assistant for {decoded_token['shopId']}"
+page_title = f"I am Mira - you personal 24/7 Shopping Assistant for {decoded_token['shopName']}"
 st.set_page_config(page_title=page_title, page_icon=":flag-in:")
 
 hide_streamlit_style = """
@@ -108,8 +109,13 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.title("🔗 Shopify App")
 # Initialize chat history
 if "messages" not in st.session_state:
-    st.session_state.messages = create_chat_messages(fetch_chat_history(api_url=st.secrets["shopify_credentials"]["chat_history_api"], token=token).json())
-    
+    response = fetch_chat_history(api_url=st.secrets["shopify_credentials"]["chat_history_api"], token=token).json()
+    st.session_state.messages = create_chat_messages(response)
+    if response["checkout_data"]:
+        st.session_state.checkout_data = response["checkout_data"]
+    else:
+        st.session_state.checkout_data = []    
+
 # Display chat messages from history on app rerun  
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -133,16 +139,22 @@ if user_input := st.chat_input("What's your query?"):
         
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            ai_message = shopify_copilot.fetch_result(token=token, token_secret=st.secrets["shopify_credentials"]["jwt_secret"] ,
-                        question=user_input, openai_api_key=openai_api_key, messages=create_placeholder_messages(st.session_state.messages),
-                        chroma_host=st.secrets["chroma_credentials"]["host"], chroma_port=st.secrets["chroma_credentials"]["port"])
+            ai_message = None
+            try:
+                ai_message = shopify_copilot.fetch_result(token=token, token_secret=st.secrets["shopify_credentials"]["jwt_secret"] ,
+                            question=user_input, openai_api_key=openai_api_key, messages=create_placeholder_messages(st.session_state.messages),
+                            checkout_data=st.session_state.checkout_data, chroma_host=st.secrets["chroma_credentials"]["host"], chroma_port=st.secrets["chroma_credentials"]["port"], 
+                            get_orders_api_url=st.secrets["shopify_credentials"]["get_orders_api"])
+            except Exception as e:
+                print(f"Error : {e}")
+                ai_message = STANDARD_ERROR_MESSAGE
+                
             st.markdown(ai_message)
-        
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": ai_message})    
         try:
             send_chat_messages(api_url=st.secrets["shopify_credentials"]["send_message_api"], token=token, user_input=user_input, ai_message=ai_message)
         except Exception as e:
-            pass
+            print(f"Error : {e}")
         
         
