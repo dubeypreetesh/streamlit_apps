@@ -15,6 +15,7 @@ import pandas as pd
 import streamlit as st
 import sys
 from time import time
+import io
 
 _ = load_dotenv(find_dotenv())  # read local .env file
 _ = """
@@ -275,18 +276,31 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
         creative_option = st.radio("creative Option?",
                 ("new creative", "existing creative"),
                 index=None,
-            ) 
+            )
+        image_option = st.radio("Product Image Option?",
+                ("use product image", "use AI image"),
+                index=None,
+        )
         app_id = st.secrets["fb_credentials"]["client_id"] 
         app_secret=st.secrets["fb_credentials"]["client_secret"] 
         act_account_id = st.text_input("Enter account Id ")
         if creative_option == None or creative_option == 'new creative':
             with st.form("my_form1"):
-                if isNotBlank(image_url):
-                    image_response = requests.get(image_url)
-                    if image_response.status_code == 200:
-                        image_bytes = image_response.content
-                else:
-                    uploaded_file = st.file_uploader("Choose a file", type=["jpg", "png", "jpeg"])
+                image_bytes=None
+                if image_option == None or image_option == 'use product image':
+                    print("product image use")
+                    if isNotBlank(image_url):
+                        image_response = requests.get(image_url)
+                        if image_response.status_code == 200:
+                            image_bytes = image_response.content
+                    else:
+                        uploaded_file = st.file_uploader("Choose a file", type=["jpg", "png", "jpeg"])
+                elif image_option == 'use AI image':
+                    print("product AI use")
+                    try:
+                        image_bytes = generate_tweet_image(title)
+                    except Exception as e:
+                        print(f"Error while generating the image :: {e.message}")
                     
                 ads_message_submitted = st.form_submit_button("Generate Message For FB Ads")  
                 ads_submitted = st.form_submit_button("Generate Image Hash For FB Ads")
@@ -296,43 +310,52 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
                 if ads_submitted:
                     with st.spinner('Wait for it...'):
                         st.write("Image is being uploaded...")
-                        if isNotBlank(image_url):
-                            st.image(image_url, caption="Uploaded Image.", use_column_width=True)
-                        elif uploaded_file is not None:
-                            image_bytes = uploaded_file.read()
-                            st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
+                        if image_option == None or image_option == 'use product image':
+                            print("ads_submitted use product image")
+                            if isNotBlank(image_url):
+                                st.image(image_url, caption="Uploaded Image.", use_column_width=True)
+                            elif uploaded_file is not None:
+                                image_bytes = uploaded_file.read()
+                                st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
+                        elif image_option == 'use AI image':
+                            print("ads_submitted use ai image")
+                            if image_bytes:
+                                image_bytes_io = io.BytesIO(image_bytes)
+                                image_bytes_io.seek(0)
+                                st.image(image=image_bytes_io)
+                        if image_bytes:
+                            print("upload image_bytes")
+                            encoded_image = base64.b64encode(image_bytes).decode('utf-8')
+                            if not app_id:
+                                st.error("app_id cannot be empty")
+                                st.stop()
                             
-                        encoded_image = base64.b64encode(image_bytes).decode('utf-8')
-                        if not app_id:
-                            st.error("app_id cannot be empty")
-                            st.stop()
-                        
-                        if not app_secret:
-                            st.error("app_secret cannot be empty.")
-                            st.stop()
-                            
-                        if not access_token:
-                            st.error("access_token cannot be empty")
-                            st.stop()
-                            
-                        if not act_account_id:
-                            st.error("act_account_id cannot be empty.")
-                            st.stop()
-                            
-                        # Show the uploaded image
-                        #app_id=st.secrets["fb_credentials"]["client_id"], app_secret=st.secrets["fb_credentials"]["client_secret"]
-                        facebook_proxy=FacebookProxy()
-                        act_account_id=f"act_{act_account_id}"
-                        result = facebook_proxy.upload_image(files=encoded_image, act_account_id=act_account_id, access_token=access_token)
-                        # Step 2: Upload image to Facebook API
-                        if 'images' in result:
-                            image_hash = result['images']['bytes']['hash']
-                            dict = {}
-                            dict['image_hash'] = image_hash
-                            st.session_state.image_data = dict
-                            st.success(f"Image uploaded successfully! Hash: {image_hash}")
-                        else:
-                            st.error(f"Failed to upload image: {result}")
+                            if not app_secret:
+                                st.error("app_secret cannot be empty.")
+                                st.stop()
+                                
+                            if not access_token:
+                                st.error("access_token cannot be empty")
+                                st.stop()
+                                
+                            if not act_account_id:
+                                st.error("act_account_id cannot be empty.")
+                                st.stop()
+                                
+                            # Show the uploaded image
+                            #app_id=st.secrets["fb_credentials"]["client_id"], app_secret=st.secrets["fb_credentials"]["client_secret"]
+                            facebook_proxy=FacebookProxy()
+                            act_account_id=f"act_{act_account_id}"
+                            result = facebook_proxy.upload_image(files=encoded_image, act_account_id=act_account_id, access_token=access_token)
+                            # Step 2: Upload image to Facebook API
+                            if 'images' in result:
+                                image_hash = result['images']['bytes']['hash']
+                                dict = {}
+                                dict['image_hash'] = image_hash
+                                st.session_state.image_data = dict
+                                st.success(f"Image uploaded successfully! Hash: {image_hash}")
+                            else:
+                                st.error(f"Failed to upload image: {result}")
                         
                 if ads_message_submitted:
                     with st.spinner('Wait for it...'):
@@ -473,6 +496,18 @@ def isBlank (myString):
 def isNotBlank (myString):
     return bool(myString and myString.strip())
 
+def generate_tweet_image(tweet: str):
+    api_url = st.secrets["image_generation"]["api_url"]
+    api_key = st.secrets["image_generation"]["api_key"]
+    headers = {"Authorization": f"Bearer {api_key}"}
+    
+    payload = {
+        "inputs": f"Design a vibrant, engaging image for the following tweet: [{tweet}]. Ensure the image is eye-catching with bold, contrasting colors and dynamic, creative typography that matches the tweet’s tone. Keep the layout clean and balanced, with enough negative space to avoid clutter. Incorporate visual elements or icons relevant to the tweet’s content. Format the image for Twitter (1200x675 pixels, JPEG or PNG) with optimized clarity for both mobile and desktop viewing."
+    }
+    
+    response = requests.post(api_url, headers=headers, json=payload)
+    image_bytes = response.content
+    return image_bytes
 
 def main_page():
     st.write("### Product Listing")
