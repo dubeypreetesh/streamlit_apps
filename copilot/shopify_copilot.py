@@ -362,6 +362,8 @@ def shopify_result_old(request_data):
 
 
     is_order_inquiry = llm_utils.get_completion(prompt=order_inquiry_prompt, temperature=0.0, openai_api_key=openai_api_key)
+    print(f"is_order_inquiry : {is_order_inquiry}")
+    print(f"checkout_data : {checkout_data}")
     
     # Step 3: Handle order-related queries
     if is_order_inquiry == "Y":
@@ -385,6 +387,7 @@ def shopify_result_old(request_data):
         
         3. **Checkout Queries**:
             - If checkout information is available, provide details about the items in the user's abandoned checkout.
+            - If there are discounts applied or extra discount codes present in the checkout data, inform the user about these discounts and how they affect the total.
             - Use the `item_variant_id` to match products in checkout data with the products in the context.
         
         4. **General eCommerce Support**:
@@ -410,6 +413,8 @@ def shopify_result_old(request_data):
         - "What are the items in my abandoned checkout?"
         - "How do I return a product I purchased?"
         - "What are the reviews like for the Portable Charger?"
+        - "Are there any discounts applied to my checkout?"
+        - "Is any discount available for my checkout?"
         
         Context: {context}, 
         
