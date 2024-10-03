@@ -12,8 +12,6 @@ from dotenv import load_dotenv, find_dotenv
 import requests
 
 import pandas as pd
-from proxy.copilot_proxy import CopilotProxy
-from proxy.facebook_proxy import FacebookProxy
 import streamlit as st
 import sys
 from time import time
@@ -38,7 +36,8 @@ if is_cloud:
     os.environ["LANGCHAIN_API_KEY"] = st.secrets["langsmith"]["LANGCHAIN_API_KEY"]
 # Sample JSON data
 from utils import encode_decode_base64
-
+from proxy.copilot_proxy import CopilotProxy
+from proxy.facebook_proxy import FacebookProxy
 def getDocument():
     with st.spinner('In progress...'):
         shop_id=None

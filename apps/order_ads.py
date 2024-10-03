@@ -12,8 +12,6 @@ from dotenv.main import load_dotenv, find_dotenv
 import requests
 
 import pandas as pd
-from proxy.copilot_proxy import CopilotProxy
-from proxy.facebook_proxy import FacebookProxy
 import streamlit as st
 
 
@@ -36,6 +34,8 @@ if is_cloud:
     os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["langsmith"]["LANGCHAIN_TRACING_V2"]
     os.environ["LANGCHAIN_API_KEY"] = st.secrets["langsmith"]["LANGCHAIN_API_KEY"]
 
+from proxy.copilot_proxy import CopilotProxy
+from proxy.facebook_proxy import FacebookProxy
 # Sample JSON data
 def getDocument():
     # with st.sidebar:
