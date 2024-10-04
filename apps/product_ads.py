@@ -37,7 +37,7 @@ if is_cloud:
     os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["langsmith"]["LANGCHAIN_TRACING_V2"]
     os.environ["LANGCHAIN_API_KEY"] = st.secrets["langsmith"]["LANGCHAIN_API_KEY"]
 # Sample JSON data
-from utils import encode_decode_base64
+from utils import encode_decode_base64, llm_utils
 from proxy.copilot_proxy import CopilotProxy
 from proxy.facebook_proxy import FacebookProxy
 
@@ -342,7 +342,7 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
                     uploaded_file = st.file_uploader("Choose a file", type=["jpg", "png", "jpeg"])
             elif image_option == 'use AI image':
                 try:
-                    image_bytes = generate_tweet_image(title)
+                    image_bytes = generate_fb_ads_image(title,description)
                 except Exception as e:
                     print(f"Error while generating the image :: {e}")
             #ads_message_submitted = st.form_submit_button("Generate Message For FB Ads")  
@@ -351,7 +351,8 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
                         #if ads_message_submitted:
             with st.spinner('Wait for it content generate.......'):
                 copilot_proxy = CopilotProxy()
-                response=copilot_proxy.create_ad_message(title=title, description=description, api_key=openai_api_key)
+                #response=copilot_proxy.create_ad_message(title=title, description=description, api_key=openai_api_key)
+                response=ad_message(api_key=openai_api_key, title=title, description=description)
                 if response and response["message"]:
                     message_dict = {}
                     message_dict['ads_message'] = response["message"]
@@ -524,18 +525,45 @@ def isBlank (myString):
 def isNotBlank (myString):
     return bool(myString and myString.strip())
 
-def generate_tweet_image(tweet: str):
+def generate_fb_ads_image(title: str,description: str):
     api_url = st.secrets["image_generation"]["api_url"]
     api_key = st.secrets["image_generation"]["api_key"]
     headers = {"Authorization": f"Bearer {api_key}"}
     
     payload = {
-        "inputs": f"Design a vibrant, engaging image for the following facebook ads : [{tweet}]. Ensure the image is eye-catching with bold, contrasting colors and dynamic, creative typography that matches the facebook ads tone. Keep the layout clean and balanced, with enough negative space to avoid clutter. Incorporate visual elements or icons relevant to the facebook ads content. Format the image for FACEBOOK (1200x675 pixels, JPEG or PNG) with optimized clarity for both mobile and desktop viewing."
+        "inputs": f"""Generate a catchy Facebook ad for a product. Use the following title and description to create the ad content.
+        Ensure the ad is engaging, concise, and within Facebook's character limits (125 characters for the headline and 90 characters for the description).
+        The tone should be persuasive and suitable for a broad audience.
+        Title: [{title}]
+        Description: [{description}]
+        
+        Facebook Ad:
+        """
     }
     
     response = requests.post(api_url, headers=headers, json=payload)
     image_bytes = response.content
     return image_bytes
+
+
+def ad_message(api_key,title, description):
+    prompt = f"""
+        Generate a Facebook Business ad for a product with the following details:
+        
+        1.Title: [{title}]
+        2.Description: [{description}]
+        The ad text should:
+        
+        Be clear, concise, and engaging, with a focus on the product's key benefits.
+        Encourage users to take action (e.g., "Shop Now," "Limited Offer," etc.).
+        Follow Facebook's ad policies, avoiding prohibited content (e.g., no misleading claims, offensive language, or discriminatory content).
+        Be under 125 characters for the main ad copy.
+        Optionally, include a headline (under 40 characters) and a description (under 30 characters).
+    """
+    message = llm_utils.get_completion(prompt=prompt, temperature=0.0,openai_api_key=api_key)
+    result_dict={}
+    result_dict["message"]=message
+    return result_dict
 
 def main_page():
     st.write("### Product Listing")
