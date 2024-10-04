@@ -16,6 +16,7 @@ import streamlit as st
 import sys
 from time import time
 import io
+from streamlit_javascript import st_javascript
 
 _ = load_dotenv(find_dotenv())  # read local .env file
 _ = """
@@ -118,13 +119,11 @@ if not df.empty:
 
 # JavaScript for redirecting to an external URL
 def js_redirect(url):
-    js_code = f"""
-    <script type="text/javascript">
-        window.location.href = "{url}";
-    </script>
-    """
-    st.markdown(js_code, unsafe_allow_html=True)
-
+    nav_script = """
+        <meta http-equiv="refresh" content="0; url='%s'">
+    """ % (url)
+    st.write(nav_script, unsafe_allow_html=True)
+    
 # Function to display the detailed record
 def show_details(record_id):
     if is_cloud: 
