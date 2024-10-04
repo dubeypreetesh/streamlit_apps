@@ -57,8 +57,8 @@ def getDocuments():
         collection_name=None
         query_params = st._get_query_params()
         # token_dict = {}
-        # token_dict['access_token'] = "EAAOqlrfH0PQBO9ZBntdZB53ZBPZBnopZAebQP43ZBkvKX3B7F5O9vPtenbKEhQhywF7fL0XwsZAsOM16Y87YOopnZCPlZAKRujTEM0btVzlWEwJHOLmYlHRKTHfm6MFZCs079QoCiVJ3ouJnZBNHnxX7Ot5KZAEVm5MqaD3TaaeYvQQscZAcdZAjnZAMaowJ02l5ZCJQ4SXAkVLqGMwZCwu14RznEtSNXoaDGmsBseAYZD"
-        # token_dict['expires_at'] = "1728046800000"
+        # token_dict['access_token'] = "EAAOqlrfH0PQBO5QnfMvfFB0A3Aqvue7H3kcxwTXHklo7fo5f3bdoxmEYhuXHiX1GcjO8YTkGtHjYmnhZBy3SsY7Nbo1CBYQcj0un2xsbUZAAZCHZB9rY1fXJBcKw3CxQbWZB84PwBIQtiWdMpcrOu153jHy0LZBi9g7iWJSxzbW4zo1gCimw5FOexabs95dJoYf6uGTYlLC7KCxgEN8mVQ6uXS0N8S5HwjYD4RdM4R"
+        # token_dict['expires_at'] = "1728054000000"
         # st.session_state.token_collection = token_dict
         if not query_params:
             if 'shop_collection' not in st.session_state:
@@ -221,7 +221,6 @@ def show_details(record_id):
                         adsList(record_id,access_token)
                     else:
                         st.write("Enter OpenAI Api Key")
-    
     with colc:
             # Back button to return to the main page
         if st.button("Back"):
@@ -280,7 +279,7 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
     st.write(f"### Generate Ads for Record ID {record_id}")
     current_time = int(time() * 1000)
     if current_time > expires_at or not expires_at:
-        st.write(f"### access token has expired .close popup and do user authentication for Record ID {record_id}")
+        st.write(f"### Access token has expired. Close popup and do FB user authentication again to proceed with ad creation.")
     else:
         if 'image_data' not in st.session_state:
             st.session_state.image_data = {}
@@ -405,8 +404,8 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
         adset_id = None
         if adset_option == None or adset_option == 'new adset':
             adset_name = st.text_input("Enter adset_name")
-            adset_bid_amount = st.number_input("Enter adset_bid_amount", 0, 1000)
-            adset_daily_budget = st.number_input("Enter adset_daily_budget", 0, 100000)
+            adset_bid_amount = st.number_input("Enter adset_bid_amount", 100, 1000)
+            adset_daily_budget = st.number_input("Enter adset_daily_budget", 10000, 100000)
         else:
             adset_id = st.text_input("Enter adset_id")
              
@@ -499,6 +498,7 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
         if not ad_name:
             st.error("ad_name cannot be empty")
             st.stop()
+        
         with st.form("my_form2"):
             submitted = st.form_submit_button("Submit")
             if submitted:
@@ -513,10 +513,9 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
                 if "error" in response_keys:
                     st.write(response["error"])
                 else:
-                    print(f"response:{response}")
                     st.session_state.ads = {"item": record_id, "message": f"ads Name is {ad_name} and {response['output']}"}
                     st.rerun()
-
+        
 
 def isBlank (myString):
     return not (myString and myString.strip())
@@ -530,13 +529,12 @@ def generate_fb_ads_image(title: str,description: str):
     api_key = st.secrets["image_generation"]["api_key"]
     headers = {"Authorization": f"Bearer {api_key}"}
     
-    payload = {
-        "inputs": f"""Generate a catchy Facebook ad for a product. Use the following title and description to create the ad content.
+    payload = {"inputs": f"""
+        Generate a catchy Facebook ad for a product. Use the following title and description to create the ad content.
         Ensure the ad is engaging, concise, and within Facebook's character limits (125 characters for the headline and 90 characters for the description).
         The tone should be persuasive and suitable for a broad audience.
         Title: [{title}]
         Description: [{description}]
-        
         Facebook Ad:
         """
     }

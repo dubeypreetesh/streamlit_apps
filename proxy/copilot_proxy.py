@@ -44,8 +44,8 @@ class CopilotProxy(object):
         return response.json()
         
     def create_fb_ads(self, access_token, app_id, app_secret, act_account_id, api_key,
-    campaign_id, campaign_name, adset_id, adset_name, adset_bid_amount, adset_daily_budget, creative_id, adcreative_name,
-    adcreative_image_hash, adcreative_message, ad_name):
+                      campaign_id, campaign_name, adset_id, adset_name, adset_bid_amount, adset_daily_budget, creative_id, adcreative_name,
+                      adcreative_image_hash, adcreative_message, ad_name):
         url = f"{self.BASE_URL}/fb-ads/create"
         payload = {
             'access_token': access_token,
