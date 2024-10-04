@@ -45,6 +45,10 @@ def getDocuments():
         shop_id=None
         collection_name=None
         query_params = st._get_query_params()
+        # token_dict = {}
+        # token_dict['access_token'] = "EAAOqlrfH0PQBO9ZBntdZB53ZBPZBnopZAebQP43ZBkvKX3B7F5O9vPtenbKEhQhywF7fL0XwsZAsOM16Y87YOopnZCPlZAKRujTEM0btVzlWEwJHOLmYlHRKTHfm6MFZCs079QoCiVJ3ouJnZBNHnxX7Ot5KZAEVm5MqaD3TaaeYvQQscZAcdZAjnZAMaowJ02l5ZCJQ4SXAkVLqGMwZCwu14RznEtSNXoaDGmsBseAYZD"
+        # token_dict['expires_at'] = "1728046800000"
+        # st.session_state.token_collection = token_dict
         if not query_params:
             if 'shop_collection' not in st.session_state:
                 st.session_state.shop_collection={}
@@ -302,6 +306,7 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
         )
         app_id = st.secrets["fb_credentials"]["client_id"] 
         app_secret=st.secrets["fb_credentials"]["client_secret"] 
+        adcreative_message = None
         #creative_option == None or 
         if creative_option == 'new creative':
             # with st.form("my_form1"):
@@ -342,11 +347,20 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
             #ads_message_submitted = st.form_submit_button("Generate Message For FB Ads")  
             #ads_submitted = st.form_submit_button("Generate Image Hash For FB Ads")
             image_hash = None  # "1baa6f1a23d1ca88f74a67a65f48c0f0"#
-            
+                        #if ads_message_submitted:
+            with st.spinner('Wait for it content generate.......'):
+                copilot_proxy = CopilotProxy()
+                response=copilot_proxy.create_ad_message(title=title, description=description, api_key=openai_api_key)
+                if response and response["message"]:
+                    message_dict = {}
+                    message_dict['ads_message'] = response["message"]
+                    st.session_state.message_data = message_dict
+                    st.success("ads message generate successfully!")
+                    
+            adcreative_message = st.text_area("Enter adcreative_message", value=st.session_state.message_data.get("ads_message"))
             # Show the uploaded image
             #if ads_submitted:
-            with st.spinner('Wait for it...'):
-                st.write("Image is being uploaded...")
+            with st.spinner('Wait for it Image is being uploaded......'):
                 if image_option == 'use product image':
                     if isNotBlank(image_url):
                         st.image(image_url, caption="Uploaded Image.", use_column_width=True)
@@ -374,17 +388,6 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
                         st.success(f"Image uploaded successfully! Hash: {image_hash}")
                     else:
                         st.error(f"Failed to upload image: {result}")
-                    
-            #if ads_message_submitted:
-            with st.spinner('Wait for it...'):
-                copilot_proxy = CopilotProxy()
-                response=copilot_proxy.create_ad_message(title=title, description=description, api_key=openai_api_key)
-                if response and response["message"]:
-                    message_dict = {}
-                    message_dict['ads_message'] = response["message"]
-                    st.session_state.message_data = message_dict
-                    st.success("ads message generate successfully!")
-                
         
         campaign_name = None
         campaign_id = None
@@ -406,13 +409,12 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
             adset_id = st.text_input("Enter adset_id")
              
         adcreative_name = None
-        adcreative_message = None
         adcreative_image_hash = None
         creative_id = None
         if creative_option == None or creative_option == 'new creative':
             adcreative_name = st.text_input("Enter adcreative_name")
             adcreative_image_hash = st.text_input("Image Hash ", value=st.session_state.image_data.get("image_hash"))
-            adcreative_message = st.text_area("Enter adcreative_message", value=st.session_state.message_data.get("ads_message"))
+            # adcreative_message = st.text_area("Enter adcreative_message", value=st.session_state.message_data.get("ads_message"))
         else:
             creative_id = st.text_input("Enter creative_id")
         
