@@ -6,9 +6,10 @@ Created on 18 Sept 2024
 import streamlit as st
 
 product_page = st.Page("product_ads.py", title="Product List", icon=":material/dashboard:")
-order_page = st.Page("order_ads.py", title="Order List", icon=":material/dashboard:")
+#order_page = st.Page("order_ads.py", title="Order List", icon=":material/dashboard:")
 
-pg = st.navigation([product_page, order_page])
+#pg = st.navigation([product_page, order_page])
+pg = st.navigation([product_page])
 #st.set_page_config(page_title="Ads manager", page_icon=":material/dashboard:")
 
 

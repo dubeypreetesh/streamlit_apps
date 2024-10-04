@@ -180,7 +180,7 @@ def show_details(record_id):
     
     if get_token:
         with st.form("my_form4"): 
-            submit_authentication = st.form_submit_button("User Authentication")
+            submit_authentication = st.form_submit_button("FB Authentication")
             if submit_authentication:
                 fb_proxy = FacebookProxy()
                 dic_object=st.session_state.shop_collection
