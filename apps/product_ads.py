@@ -187,7 +187,7 @@ def show_details(record_id):
                 try:
                     BASE_URL = "https://graph.facebook.com/v20.0"
                     FB_BASE_URL = "https://www.facebook.com/v20.0"
-                    fb_redirect_url = f'{FB_BASE_URL}/dialog/oauth?client_id=st.secrets["fb_credentials"]["client_id"]&redirect_uri=st.secrets["fb_credentials"]["callback_url"]&scope=st.secrets["fb_credentials"]["scope"]&response_type=code&state={state}'
+                    fb_redirect_url = f'{FB_BASE_URL}/dialog/oauth?client_id={st.secrets["fb_credentials"]["client_id"]}&redirect_uri={st.secrets["fb_credentials"]["callback_url"]}&scope={st.secrets["fb_credentials"]["scope"]}&response_type=code&state={state}'
                     js_redirect(fb_redirect_url)
                     #fb_proxy.get_authorization_code(app_id=st.secrets["fb_credentials"]["client_id"],scope=st.secrets["fb_credentials"]["scope"], callback_url=st.secrets["fb_credentials"]["callback_url"],state=state)
                 except Exception as e:
