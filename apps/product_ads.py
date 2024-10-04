@@ -118,7 +118,12 @@ if not df.empty:
 
 # JavaScript for redirecting to an external URL
 def js_redirect(url):
-    st.markdown(f'<meta http-equiv="refresh" content="0; url={url}" />', unsafe_allow_html=True)
+    js_code = f"""
+    <script type="text/javascript">
+        window.location.href = "{url}";
+    </script>
+    """
+    st.markdown(js_code, unsafe_allow_html=True)
 
 # Function to display the detailed record
 def show_details(record_id):
