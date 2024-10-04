@@ -195,7 +195,8 @@ def show_details(record_id):
                 if st.button("Ads Generation"):
                     if openai_api_key.startswith("sk-"):
                         ads(openai_api_key,access_token,expires_at,record_id, title, name, image_url)
-                
+                    else:
+                        st.write("Enter OpenAI Api Key")
                 if 'ads' in st.session_state:
                     ads_dic=st.session_state.ads
                     if ads_dic["item"]==record_id:
@@ -204,6 +205,8 @@ def show_details(record_id):
                 if st.button("Ads listing"):
                     if openai_api_key.startswith("sk-"):
                         adsList(record_id,access_token)
+                    else:
+                        st.write("Enter OpenAI Api Key")
     
     with colc:
             # Back button to return to the main page
