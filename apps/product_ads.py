@@ -40,6 +40,17 @@ if is_cloud:
 from utils import encode_decode_base64
 from proxy.copilot_proxy import CopilotProxy
 from proxy.facebook_proxy import FacebookProxy
+
+if is_cloud: 
+    with st.sidebar:
+        st.title("fill your information")
+        openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
+        if not openai_api_key.startswith("sk-"):
+            st.warning("Please enter your OpenAI API key!", icon="⚠")
+else:
+    with st.sidebar:
+        openai_api_key = st.secrets["openai"]["api_key"]
+        
 def getDocuments():
     with st.spinner('In progress...'):
         shop_id=None
@@ -128,16 +139,6 @@ def js_redirect(url):
     
 # Function to display the detailed record
 def show_details(record_id):
-    if is_cloud: 
-        with st.sidebar:
-            st.title("fill your information")
-            openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
-            if not openai_api_key.startswith("sk-"):
-                st.warning("Please enter your OpenAI API key!", icon="⚠")
-    else:
-        with st.sidebar:
-            openai_api_key = st.secrets["openai"]["api_key"]
-    
     st.write(f"### Detailed View of Record ID {record_id}")
     selected_record = df[df['id'] == record_id].drop(columns=['Details'])
     image_url = selected_record.iloc[0]['image']
