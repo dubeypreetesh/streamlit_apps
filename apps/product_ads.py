@@ -171,20 +171,19 @@ def show_details(record_id):
         with st.form("my_form4"): 
             submit_authentication = st.form_submit_button("User Authentication")
             if submit_authentication:
-                if openai_api_key.startswith("sk-"):
-                    fb_proxy = FacebookProxy()
-                    dic_object=st.session_state.shop_collection
-                    state_dict = {}
-                    state_dict['shop_id'] = dic_object["shop_id"]
-                    state_dict['collection_name'] = dic_object["collection_name"]
-                    state_dict['id'] = record_id
-                    state_dict['type'] = "product"
-                    encoded_string=encode_decode_base64.encode_base64(json.dumps(state_dict))
-                    state=encoded_string
-                    try:
-                        fb_proxy.get_authorization_code(app_id=st.secrets["fb_credentials"]["client_id"],scope=st.secrets["fb_credentials"]["scope"], callbacl_url=st.secrets["fb_credentials"]["callback_url"],state=state)
-                    except Exception as e:
-                        print(f"Error while authorization facebook: {e.message}")
+                fb_proxy = FacebookProxy()
+                dic_object=st.session_state.shop_collection
+                state_dict = {}
+                state_dict['shop_id'] = dic_object["shop_id"]
+                state_dict['collection_name'] = dic_object["collection_name"]
+                state_dict['id'] = record_id
+                state_dict['type'] = "product"
+                encoded_string=encode_decode_base64.encode_base64(json.dumps(state_dict))
+                state=encoded_string
+                try:
+                    fb_proxy.get_authorization_code(app_id=st.secrets["fb_credentials"]["client_id"],scope=st.secrets["fb_credentials"]["scope"], callbacl_url=st.secrets["fb_credentials"]["callback_url"],state=state)
+                except Exception as e:
+                    print(f"Error while authorization facebook: {e.message}")
     else:
         dic_object=st.session_state.token_collection
         access_token = dic_object["access_token"]
@@ -194,7 +193,8 @@ def show_details(record_id):
             with cola:
                 # st.write(selected_record)
                 if st.button("Ads Generation"):
-                    ads(openai_api_key,access_token,expires_at,record_id, title, name, image_url)
+                    if openai_api_key.startswith("sk-"):
+                        ads(openai_api_key,access_token,expires_at,record_id, title, name, image_url)
                 
                 if 'ads' in st.session_state:
                     ads_dic=st.session_state.ads
@@ -202,7 +202,8 @@ def show_details(record_id):
                         f"ads submitted successfully! item record id: {ads_dic['item']} and {ads_dic['message']}"    
             with colb:
                 if st.button("Ads listing"):
-                    adsList(record_id,access_token)
+                    if openai_api_key.startswith("sk-"):
+                        adsList(record_id,access_token)
     
     with colc:
             # Back button to return to the main page
