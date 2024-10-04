@@ -116,6 +116,10 @@ if not df.empty:
     df['Details'] = [f"View Details {i}" for i in df['id']]
 
 
+# JavaScript for redirecting to an external URL
+def js_redirect(url):
+    st.markdown(f'<meta http-equiv="refresh" content="0; url={url}" />', unsafe_allow_html=True)
+
 # Function to display the detailed record
 def show_details(record_id):
     if is_cloud: 
@@ -181,7 +185,11 @@ def show_details(record_id):
                 encoded_string=encode_decode_base64.encode_base64(json.dumps(state_dict))
                 state=encoded_string
                 try:
-                    fb_proxy.get_authorization_code(app_id=st.secrets["fb_credentials"]["client_id"],scope=st.secrets["fb_credentials"]["scope"], callback_url=st.secrets["fb_credentials"]["callback_url"],state=state)
+                    BASE_URL = "https://graph.facebook.com/v20.0"
+                    FB_BASE_URL = "https://www.facebook.com/v20.0"
+                    fb_redirect_url = f'{FB_BASE_URL}/dialog/oauth?client_id=st.secrets["fb_credentials"]["client_id"]&redirect_uri=st.secrets["fb_credentials"]["callback_url"]&scope=st.secrets["fb_credentials"]["scope"]&response_type=code&state={state}'
+                    js_redirect(fb_redirect_url)
+                    #fb_proxy.get_authorization_code(app_id=st.secrets["fb_credentials"]["client_id"],scope=st.secrets["fb_credentials"]["scope"], callback_url=st.secrets["fb_credentials"]["callback_url"],state=state)
                 except Exception as e:
                     print(f"Error while authorization facebook: {e}")
     else:
