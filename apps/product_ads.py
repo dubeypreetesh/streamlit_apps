@@ -404,8 +404,8 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
         adset_id = None
         if adset_option == None or adset_option == 'new adset':
             adset_name = st.text_input("Enter adset_name")
-            adset_bid_amount = st.number_input("Enter adset_bid_amount", 100, 1000)
-            adset_daily_budget = st.number_input("Enter adset_daily_budget", 10000, 100000)
+            adset_bid_amount = st.number_input(label="Enter adset_bid_amount", min_value=100, max_value=1000)
+            adset_daily_budget = st.number_input(label="Enter adset_daily_budget", min_value=10000, max_value=100000)
         else:
             adset_id = st.text_input("Enter adset_id")
              
