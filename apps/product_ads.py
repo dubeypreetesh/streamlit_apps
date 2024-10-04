@@ -39,7 +39,7 @@ if is_cloud:
 from utils import encode_decode_base64
 from proxy.copilot_proxy import CopilotProxy
 from proxy.facebook_proxy import FacebookProxy
-def getDocument():
+def getDocuments():
     with st.spinner('In progress...'):
         shop_id=None
         collection_name=None
@@ -79,14 +79,14 @@ def getDocument():
             
         type_data = "product"
         copilot_proxy = CopilotProxy()
-        documents = copilot_proxy.get_shopify_doucuments_by_type(shop_id=shop_id, collection_name=collection_name, type_data=type_data)
+        documents = copilot_proxy.get_shopify_documents_by_type(shop_id=shop_id, collection_name=collection_name, type_data=type_data)
         return documents
 
 
 # Load JSON data
 def get_json_data():
     product_list = []
-    response = getDocument()
+    response = getDocuments()
     if response:
         for doc in response:
             data = json.loads(doc)
@@ -181,7 +181,7 @@ def show_details(record_id):
                 encoded_string=encode_decode_base64.encode_base64(json.dumps(state_dict))
                 state=encoded_string
                 try:
-                    fb_proxy.get_authorization_code(app_id=st.secrets["fb_credentials"]["client_id"],scope=st.secrets["fb_credentials"]["scope"], callbacl_url=st.secrets["fb_credentials"]["callback_url"],state=state)
+                    fb_proxy.get_authorization_code(app_id=st.secrets["fb_credentials"]["client_id"],scope=st.secrets["fb_credentials"]["scope"], callback_url=st.secrets["fb_credentials"]["callback_url"],state=state)
                 except Exception as e:
                     print(f"Error while authorization facebook: {e}")
     else:

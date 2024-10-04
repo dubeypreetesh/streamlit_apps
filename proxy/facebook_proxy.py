@@ -15,10 +15,10 @@ class FacebookProxy():
     BASE_URL = "https://graph.facebook.com/v20.0"
     FB_BASE_URL = "https://www.facebook.com/v20.0"
     
-    def get_authorization_code(self,app_id,scope, callbacl_url,state):
+    def get_authorization_code(self,app_id,scope, callback_url,state):
         # Construct the OAuth URL
         oauth_url = (
-            f"{self.FB_BASE_URL}/dialog/oauth?client_id={app_id}&redirect_uri={callbacl_url}&scope={scope}&response_type=code&state={state}"
+            f"{self.FB_BASE_URL}/dialog/oauth?client_id={app_id}&redirect_uri={callback_url}&scope={scope}&response_type=code&state={state}"
         )
         webbrowser.open(oauth_url)
         

@@ -51,7 +51,7 @@ def getDocument():
             collection_name = dic_object["collection_name"]
         type_data = "order"
         copilot_proxy = CopilotProxy()
-        documents = copilot_proxy.get_shopify_doucuments_by_type(shop_id=shop_id, collection_name=collection_name, type_data=type_data)
+        documents = copilot_proxy.get_shopify_documents_by_type(shop_id=shop_id, collection_name=collection_name, type_data=type_data)
         return documents
 
 # Load JSON data

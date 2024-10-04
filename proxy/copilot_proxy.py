@@ -157,8 +157,8 @@ class CopilotProxy(object):
         *** api call for shopify copilot ***
     """
     
-    def get_shopify_doucuments_by_type(self, shop_id, collection_name, type_data):
-        url = f"{self.BASE_URL}/shopify/doucuments/list"
+    def get_shopify_documents_by_type(self, shop_id, collection_name, type_data):
+        url = f"{self.BASE_URL}/shopify/documents/list"
         payload = {
             'shop_id': shop_id,
             'collection_name': collection_name,
