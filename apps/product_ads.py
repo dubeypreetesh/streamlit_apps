@@ -510,7 +510,7 @@ def generate_tweet_image(tweet: str):
     headers = {"Authorization": f"Bearer {api_key}"}
     
     payload = {
-        "inputs": f"Design a vibrant, engaging image for the following tweet: [{tweet}]. Ensure the image is eye-catching with bold, contrasting colors and dynamic, creative typography that matches the tweet’s tone. Keep the layout clean and balanced, with enough negative space to avoid clutter. Incorporate visual elements or icons relevant to the tweet’s content. Format the image for Twitter (1200x675 pixels, JPEG or PNG) with optimized clarity for both mobile and desktop viewing."
+        "inputs": f"Design a vibrant, engaging image for the following facebook ads : [{tweet}]. Ensure the image is eye-catching with bold, contrasting colors and dynamic, creative typography that matches the facebook ads tone. Keep the layout clean and balanced, with enough negative space to avoid clutter. Incorporate visual elements or icons relevant to the facebook ads content. Format the image for FACEBOOK (1200x675 pixels, JPEG or PNG) with optimized clarity for both mobile and desktop viewing."
     }
     
     response = requests.post(api_url, headers=headers, json=payload)
