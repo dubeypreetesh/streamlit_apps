@@ -183,7 +183,7 @@ def show_details(record_id):
                 try:
                     fb_proxy.get_authorization_code(app_id=st.secrets["fb_credentials"]["client_id"],scope=st.secrets["fb_credentials"]["scope"], callbacl_url=st.secrets["fb_credentials"]["callback_url"],state=state)
                 except Exception as e:
-                    print(f"Error while authorization facebook: {e.message}")
+                    print(f"Error while authorization facebook: {e}")
     else:
         dic_object=st.session_state.token_collection
         access_token = dic_object["access_token"]
@@ -308,7 +308,7 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
                     try:
                         image_bytes = generate_tweet_image(title)
                     except Exception as e:
-                        print(f"Error while generating the image :: {e.message}")
+                        print(f"Error while generating the image :: {e}")
                     
                 ads_message_submitted = st.form_submit_button("Generate Message For FB Ads")  
                 ads_submitted = st.form_submit_button("Generate Image Hash For FB Ads")
