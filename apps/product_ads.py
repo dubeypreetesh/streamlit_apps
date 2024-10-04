@@ -354,9 +354,9 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
                             # Step 2: Upload image to Facebook API
                             if 'images' in result:
                                 image_hash = result['images']['bytes']['hash']
-                                dict = {}
-                                dict['image_hash'] = image_hash
-                                st.session_state.image_data = dict
+                                image_dict = {}
+                                image_dict['image_hash'] = image_hash
+                                st.session_state.image_data = image_dict
                                 st.success(f"Image uploaded successfully! Hash: {image_hash}")
                             else:
                                 st.error(f"Failed to upload image: {result}")
@@ -366,9 +366,9 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
                         copilot_proxy = CopilotProxy()
                         response=copilot_proxy.create_ad_message(title=title, description=description, api_key=openai_api_key)
                         if response and response["message"]:
-                            dict = {}
-                            dict['ads_message'] = response["message"]
-                            st.session_state.message_data = dict
+                            message_dict = {}
+                            message_dict['ads_message'] = response["message"]
+                            st.session_state.message_data = message_dict
                             st.success("ads message generate successfully!")
                 
         with st.form("my_form2"):
