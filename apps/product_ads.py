@@ -187,7 +187,6 @@ def show_details(record_id):
                 encoded_string=encode_decode_base64.encode_base64(json.dumps(state_dict))
                 state=encoded_string
                 try:
-                    BASE_URL = "https://graph.facebook.com/v20.0"
                     FB_BASE_URL = "https://www.facebook.com/v20.0"
                     fb_redirect_url = f'{FB_BASE_URL}/dialog/oauth?client_id={st.secrets["fb_credentials"]["client_id"]}&redirect_uri={st.secrets["fb_credentials"]["callback_url"]}&scope={st.secrets["fb_credentials"]["scope"]}&response_type=code&state={state}'
                     js_redirect(fb_redirect_url)
@@ -283,6 +282,8 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
         if 'message_data' not in st.session_state:
             st.session_state.message_data = {}
             
+        act_account_id = st.text_input("Enter account Id ")
+            
         campaign_option = st.radio("Campaign Option?",
                 ("new campaign", "existing campaign"),
                 index=None,
@@ -301,201 +302,202 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
         )
         app_id = st.secrets["fb_credentials"]["client_id"] 
         app_secret=st.secrets["fb_credentials"]["client_secret"] 
-        act_account_id = st.text_input("Enter account Id ")
-        if creative_option == None or creative_option == 'new creative':
-            with st.form("my_form1"):
-                image_bytes=None
-                if image_option == None or image_option == 'use product image':
-                    print("product image use")
+        #creative_option == None or 
+        if creative_option == 'new creative':
+            # with st.form("my_form1"):
+            if not act_account_id:
+                st.error("act_account_id cannot be empty.")
+                st.stop()
+            
+            if not app_id:
+                st.error("app_id cannot be empty")
+                st.stop()
+            
+            if not app_secret:
+                st.error("app_secret cannot be empty.")
+                st.stop()
+                
+            if not image_option:
+                st.error("select image_option.")
+                st.stop()
+                
+            if not access_token:
+                st.error("access_token cannot be empty")
+                st.stop()
+                
+
+            image_bytes=None
+            if image_option == 'use product image':
+                if isNotBlank(image_url):
+                    image_response = requests.get(image_url)
+                    if image_response.status_code == 200:
+                        image_bytes = image_response.content
+                else:
+                    uploaded_file = st.file_uploader("Choose a file", type=["jpg", "png", "jpeg"])
+            elif image_option == 'use AI image':
+                try:
+                    image_bytes = generate_tweet_image(title)
+                except Exception as e:
+                    print(f"Error while generating the image :: {e}")
+            #ads_message_submitted = st.form_submit_button("Generate Message For FB Ads")  
+            #ads_submitted = st.form_submit_button("Generate Image Hash For FB Ads")
+            image_hash = None  # "1baa6f1a23d1ca88f74a67a65f48c0f0"#
+            
+            # Show the uploaded image
+            #if ads_submitted:
+            with st.spinner('Wait for it...'):
+                st.write("Image is being uploaded...")
+                if image_option == 'use product image':
                     if isNotBlank(image_url):
-                        image_response = requests.get(image_url)
-                        if image_response.status_code == 200:
-                            image_bytes = image_response.content
-                    else:
-                        uploaded_file = st.file_uploader("Choose a file", type=["jpg", "png", "jpeg"])
+                        st.image(image_url, caption="Uploaded Image.", use_column_width=True)
+                    elif uploaded_file is not None:
+                        image_bytes = uploaded_file.read()
+                        st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
                 elif image_option == 'use AI image':
-                    print("product AI use")
-                    try:
-                        image_bytes = generate_tweet_image(title)
-                    except Exception as e:
-                        print(f"Error while generating the image :: {e}")
-                    
-                ads_message_submitted = st.form_submit_button("Generate Message For FB Ads")  
-                ads_submitted = st.form_submit_button("Generate Image Hash For FB Ads")
-                image_hash = None  # "1baa6f1a23d1ca88f74a67a65f48c0f0"#
-                
-                # Show the uploaded image
-                if ads_submitted:
-                    with st.spinner('Wait for it...'):
-                        st.write("Image is being uploaded...")
-                        if image_option == None or image_option == 'use product image':
-                            print("ads_submitted use product image")
-                            if isNotBlank(image_url):
-                                st.image(image_url, caption="Uploaded Image.", use_column_width=True)
-                            elif uploaded_file is not None:
-                                image_bytes = uploaded_file.read()
-                                st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
-                        elif image_option == 'use AI image':
-                            print("ads_submitted use ai image")
-                            if image_bytes:
-                                image_bytes_io = io.BytesIO(image_bytes)
-                                image_bytes_io.seek(0)
-                                st.image(image=image_bytes_io)
-                        if image_bytes:
-                            print("upload image_bytes")
-                            encoded_image = base64.b64encode(image_bytes).decode('utf-8')
-                            if not app_id:
-                                st.error("app_id cannot be empty")
-                                st.stop()
-                            
-                            if not app_secret:
-                                st.error("app_secret cannot be empty.")
-                                st.stop()
-                                
-                            if not access_token:
-                                st.error("access_token cannot be empty")
-                                st.stop()
-                                
-                            if not act_account_id:
-                                st.error("act_account_id cannot be empty.")
-                                st.stop()
-                                
-                            # Show the uploaded image
-                            #app_id=st.secrets["fb_credentials"]["client_id"], app_secret=st.secrets["fb_credentials"]["client_secret"]
-                            facebook_proxy=FacebookProxy()
-                            act_account_id=f"act_{act_account_id}"
-                            result = facebook_proxy.upload_image(files=encoded_image, act_account_id=act_account_id, access_token=access_token)
-                            # Step 2: Upload image to Facebook API
-                            if 'images' in result:
-                                image_hash = result['images']['bytes']['hash']
-                                image_dict = {}
-                                image_dict['image_hash'] = image_hash
-                                st.session_state.image_data = image_dict
-                                st.success(f"Image uploaded successfully! Hash: {image_hash}")
-                            else:
-                                st.error(f"Failed to upload image: {result}")
+                    if image_bytes:
+                        image_bytes_io = io.BytesIO(image_bytes)
+                        image_bytes_io.seek(0)
+                        st.image(image=image_bytes_io)
+                if image_bytes:
+                    encoded_image = base64.b64encode(image_bytes).decode('utf-8')
                         
-                if ads_message_submitted:
-                    with st.spinner('Wait for it...'):
-                        copilot_proxy = CopilotProxy()
-                        response=copilot_proxy.create_ad_message(title=title, description=description, api_key=openai_api_key)
-                        if response and response["message"]:
-                            message_dict = {}
-                            message_dict['ads_message'] = response["message"]
-                            st.session_state.message_data = message_dict
-                            st.success("ads message generate successfully!")
+                    # Show the uploaded image
+                    #app_id=st.secrets["fb_credentials"]["client_id"], app_secret=st.secrets["fb_credentials"]["client_secret"]
+                    facebook_proxy=FacebookProxy()
+                    result = facebook_proxy.upload_image(files=encoded_image, act_account_id=f"act_{act_account_id}", access_token=access_token)
+                    # Step 2: Upload image to Facebook API
+                    if 'images' in result:
+                        image_hash = result['images']['bytes']['hash']
+                        image_dict = {}
+                        image_dict['image_hash'] = image_hash
+                        st.session_state.image_data = image_dict
+                        st.success(f"Image uploaded successfully! Hash: {image_hash}")
+                    else:
+                        st.error(f"Failed to upload image: {result}")
+                    
+            #if ads_message_submitted:
+            with st.spinner('Wait for it...'):
+                copilot_proxy = CopilotProxy()
+                response=copilot_proxy.create_ad_message(title=title, description=description, api_key=openai_api_key)
+                if response and response["message"]:
+                    message_dict = {}
+                    message_dict['ads_message'] = response["message"]
+                    st.session_state.message_data = message_dict
+                    st.success("ads message generate successfully!")
                 
+        
+        campaign_name = None
+        campaign_id = None
+
+        if campaign_option == None or campaign_option == 'new campaign':
+            campaign_name = st.text_input("Enter campaign_name ")
+        elif campaign_option == 'existing campaign':
+            campaign_id = st.text_input("Enter campaign_id ")
+        
+        adset_name = None
+        adset_bid_amount = None
+        adset_daily_budget = None
+        adset_id = None
+        if adset_option == None or adset_option == 'new adset':
+            adset_name = st.text_input("Enter adset_name")
+            adset_bid_amount = st.number_input("Enter adset_bid_amount", 0, 1000)
+            adset_daily_budget = st.number_input("Enter adset_daily_budget", 0, 100000)
+        else:
+            adset_id = st.text_input("Enter adset_id")
+             
+        adcreative_name = None
+        adcreative_message = None
+        adcreative_image_hash = None
+        creative_id = None
+        if creative_option == None or creative_option == 'new creative':
+            adcreative_name = st.text_input("Enter adcreative_name")
+            adcreative_image_hash = st.text_input("Image Hash ", value=st.session_state.image_data.get("image_hash"))
+            adcreative_message = st.text_area("Enter adcreative_message", value=st.session_state.message_data.get("ads_message"))
+        else:
+            creative_id = st.text_input("Enter creative_id")
+        
+        ad_name = st.text_input("Enter ad_name")
+        
+        if not act_account_id:
+            st.error("act_account_id cannot be empty")
+            st.stop()
+        
+        if not app_id:
+            st.error("app_id cannot be empty.")
+            st.stop()
+            
+        if not app_secret:
+            st.error("app_secret cannot be empty")
+            st.stop()
+            
+        if not access_token:
+            st.error("access_token cannot be empty")
+            st.stop()
+            
+        if campaign_option == None:
+            st.error("select campaign_option")
+            st.stop()
+            
+        if adset_option == None:
+            st.error("select adset_option")
+            st.stop()
+            
+        if creative_option == None:
+            st.error("select creative_option")
+            st.stop()
+            
+        if campaign_option == 'new campaign':
+            if not campaign_name:
+                st.error("campaign_name cannot be empty")
+                st.stop()
+        
+        if campaign_option == 'existing campaign':
+            if not campaign_id:
+                st.error("campaign_id cannot be empty")
+                st.stop()
+            
+        if adset_option == 'new adset':
+            if not adset_name:
+                st.error("adset_name cannot be empty")
+                st.stop()
+                
+            if not adset_bid_amount or (adset_bid_amount<100):
+                st.error("minimum adset_bid_amount should be 100")
+                st.stop()
+                
+            if not adset_daily_budget or (adset_daily_budget<10000):
+                st.error("minimum adset_daily_budget should be 10000")
+                st.stop()
+        
+        if adset_option == 'existing adset':
+            if not adset_id:
+                st.error("adset_id cannot be empty")
+                st.stop()
+                    
+        if creative_option == 'new creative':
+            if not adcreative_name:
+                st.error("adcreative_name cannot be empty")
+                st.stop()
+                
+            if not adcreative_image_hash:
+                st.error("adcreative_image_hash cannot be empty")
+                st.stop()
+                
+            if not adcreative_message:
+                st.error("adcreative_message cannot be empty")
+                st.stop()
+        
+        if creative_option == 'existing creative':
+            if not creative_id:
+                st.error("creative_id cannot be empty")
+                st.stop()
+                    
+        if not ad_name:
+            st.error("ad_name cannot be empty")
+            st.stop()
         with st.form("my_form2"):
-            campaign_name = None
-            campaign_id = None
-    
-            if campaign_option == None or campaign_option == 'new campaign':
-                campaign_name = st.text_input("Enter campaign_name ")
-            elif campaign_option == 'existing campaign':
-                campaign_id = st.text_input("Enter campaign_id ")
-            
-            adset_name = None
-            adset_bid_amount = None
-            adset_daily_budget = None
-            adset_id = None
-            if adset_option == None or adset_option == 'new adset':
-                adset_name = st.text_input("Enter adset_name")
-                adset_bid_amount = st.number_input("Enter adset_bid_amount", 0, 100)
-                adset_daily_budget = st.number_input("Enter adset_daily_budget", 0, 10000)
-            else:
-                adset_id = st.text_input("Enter adset_id")
-                 
-            adcreative_name = None
-            adcreative_message = None
-            adcreative_image_hash = None
-            creative_id = None
-            if creative_option == None or creative_option == 'new creative':
-                adcreative_name = st.text_input("Enter adcreative_name")
-                adcreative_image_hash = st.text_input("Image Hash ", value=st.session_state.image_data.get("image_hash"))
-                adcreative_message = st.text_area("Enter adcreative_message", value=st.session_state.message_data.get("ads_message"))
-            else:
-                creative_id = st.text_input("Enter creative_id")
-            
-            ad_name = st.text_input("Enter ad_name")
             submitted = st.form_submit_button("Submit")
             if submitted:
-                if not app_id:
-                    st.error("app_id cannot be empty.")
-                    st.stop()
-                    
-                if not app_secret:
-                    st.error("app_secret cannot be empty")
-                    st.stop()
-                    
-                if not access_token:
-                    st.error("access_token cannot be empty")
-                    st.stop()
-                    
-                if not act_account_id:
-                    st.error("act_account_id cannot be empty")
-                    st.stop()
-                    
-                if campaign_option == None:
-                    st.error("select campaign_option")
-                    st.stop()
-                    
-                if adset_option == None:
-                    st.error("select adset_option")
-                    st.stop()
-                    
-                if creative_option == None:
-                    st.error("select creative_option")
-                    st.stop()
-                    
-                if campaign_option == 'new campaign':
-                    if not campaign_name:
-                        st.error("campaign_name cannot be empty")
-                        st.stop()
-                
-                if campaign_option == 'existing campaign':
-                    if not campaign_id:
-                        st.error("campaign_id cannot be empty")
-                        st.stop()
-                    
-                if adset_option == 'new adset':
-                    if not adset_name:
-                        st.error("adset_name cannot be empty")
-                        st.stop()
-                        
-                    if not adset_bid_amount:
-                        st.error("adset_bid_amount cannot be 0")
-                        st.stop()
-                        
-                    if not adset_daily_budget:
-                        st.error("adset_daily_budget cannot be 0")
-                        st.stop()
-                
-                if adset_option == 'existing adset':
-                    if not adset_id:
-                        st.error("adset_id cannot be empty")
-                        st.stop()
-                            
-                if creative_option == 'new creative':
-                    if not adcreative_name:
-                        st.error("adcreative_name cannot be empty")
-                        st.stop()
-                        
-                    if not adcreative_image_hash:
-                        st.error("adcreative_image_hash cannot be empty")
-                        st.stop()
-                        
-                    if not adcreative_message:
-                        st.error("adcreative_message cannot be empty")
-                        st.stop()
-                
-                if creative_option == 'existing creative':
-                    if not creative_id:
-                        st.error("creative_id cannot be empty")
-                        st.stop()
-                            
-                if not ad_name:
-                    st.error("ad_name cannot be empty")
-                    st.stop()
                 copilot_proxy = CopilotProxy()
                 response = copilot_proxy.create_fb_ads(access_token=access_token, app_id=app_id, app_secret=app_secret,
                             act_account_id=act_account_id, api_key=openai_api_key,
@@ -503,8 +505,13 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
                             adset_name=adset_name, adset_bid_amount=adset_bid_amount, adset_daily_budget=adset_daily_budget,
                             creative_id=creative_id, adcreative_name=adcreative_name, adcreative_image_hash=adcreative_image_hash,
                             adcreative_message=adcreative_message, ad_name=ad_name)
-                st.session_state.ads = {"item": record_id, "message": f"ads Name is {ad_name} and {response['output']}"}
-                st.rerun()
+                response_keys = response.keys()
+                if "error" in response_keys:
+                    st.write(response["error"])
+                else:
+                    print(f"response:{response}")
+                    st.session_state.ads = {"item": record_id, "message": f"ads Name is {ad_name} and {response['output']}"}
+                    st.rerun()
 
 
 def isBlank (myString):
