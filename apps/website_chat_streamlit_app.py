@@ -12,7 +12,6 @@ from dotenv import load_dotenv, find_dotenv
 import requests
 from streamlit_javascript import st_javascript
 
-from copilot import shopify_copilot
 import streamlit as st
 
 
@@ -36,7 +35,7 @@ if is_cloud:
     os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["langsmith"]["LANGCHAIN_TRACING_V2"]
     os.environ["LANGCHAIN_API_KEY"] = st.secrets["langsmith"]["LANGCHAIN_API_KEY"]
 
-
+from copilot import shopify_copilot
    
 def create_placeholder_messages(messages: list):
     messages_copy = []
