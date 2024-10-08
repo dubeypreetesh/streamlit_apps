@@ -59,7 +59,7 @@ def getDocuments():
         # token_dict = {}
         # token_dict['access_token'] = "EAAOqlrfH0PQBOxUUUWqvDrZAPqbJfIa5M6YtDI61AJBJQrx9Ct5w60XoAnbZAIZA1vcRwIlmbXnJSJCRu63ZAgFCuVSENmFMc0sQkbVo3igmAuS9QHQ1ruATDfEImP6O5qzx43Yd3EAlAeqRgasRRFDi1KakEt55ZC4lg7G0sCGEQlk7ziIsiX4FoXWU4L3TwaZCM0M2Bbeh27SDKvLTQWiyAJXEpf1BIZD"
         # token_dict['expires_at'] = "1728385200000"
-        #st.session_state.token_collection = token_dict
+        # st.session_state.token_collection = token_dict
         if not query_params:
             if 'shop_collection' not in st.session_state:
                 st.session_state.shop_collection={}
@@ -214,7 +214,7 @@ def show_details(record_id):
                 if 'ads' in st.session_state:
                     ads_dic=st.session_state.ads
                     if ads_dic["item"]==record_id:
-                        f"ads submitted successfully! item record id: {ads_dic['item']} and {ads_dic['message']}"    
+                        f"ads created for {ads_dic['item']}, {ads_dic['message']}"    
             with colb:
                 if st.button("Ads listing"):
                     if openai_api_key.startswith("sk-"):
@@ -379,10 +379,10 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
                 with st.spinner('Wait for it Image is being uploaded......'):
                     if image_option == 'use product image':
                         if isNotBlank(image_url):
-                            st.image(image_url, caption="Uploaded Image.", use_column_width=False)
+                            st.image(image_url, use_column_width=True)
                         elif uploaded_file is not None:
                             image_bytes = uploaded_file.read()
-                            st.image(uploaded_file, caption="Uploaded Image.", use_column_width=False)
+                            st.image(uploaded_file, use_column_width=True)
                     elif image_option == 'use AI image':
                         if image_bytes:
                             image_bytes_io = io.BytesIO(image_bytes)
@@ -458,7 +458,7 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
         
         if creative_option == None or creative_option == 'new creative':
             adcreative_name = st.text_input("Enter adcreative_name")
-            adcreative_image_hash = st.text_input("Image Hash ", value=st.session_state.image_data.get("image_hash"))
+            adcreative_image_hash = st.text_input("Image Hash ", value=st.session_state.image_data.get("image_hash"),disabled=True)
         else:
             creative_id = st.text_input("Enter creative_id")
             
@@ -488,8 +488,7 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
         
         with st.form("my_form2"):
             if valid_from==False:
-                st.warning("Please fill Error after continue.....", icon="⚠")
-                # st.stop()
+                st.warning("Please required fields after submit .....", icon="⚠")
             submitted = st.form_submit_button("Submit")
             if submitted and valid_from:
                 with st.spinner('Wait for it ads is being created......'):
