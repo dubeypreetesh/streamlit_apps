@@ -28,10 +28,12 @@ Deprecated==1.2.14
 distro==1.9.0
 dnspython==2.6.1
 email_validator==2.2.0
+eventlet==0.37.0
 fake-useragent==1.5.1
 fastapi==0.113.0
 fastapi-cli==0.0.5
 filelock==3.15.4
+Flask==3.0.3
 flatbuffers==24.3.25
 frozenlist==1.4.1
 fsspec==2024.6.1
@@ -50,6 +52,7 @@ humanfriendly==10.0
 idna==3.8
 importlib_metadata==8.2.0
 importlib_resources==6.4.4
+itsdangerous==2.2.0
 Jinja2==3.1.4
 jiter==0.5.0
 jmespath==1.0.1
@@ -130,6 +133,7 @@ rpds-py==0.19.1
 rsa==4.9
 s3transfer==0.10.2
 selenium==4.24.0
+setuptools==75.1.0
 shellingham==1.5.4
 six==1.16.0
 smmap==5.0.1
@@ -162,7 +166,10 @@ watchdog==4.0.1
 watchfiles==0.24.0
 websocket-client==1.8.0
 websockets==10.4
+Werkzeug==3.0.4
 wrapt==1.16.0
 wsproto==1.2.0
 yarl==1.9.6
 zipp==3.19.2
+zope.event==5.0
+zope.interface==7.0.3
