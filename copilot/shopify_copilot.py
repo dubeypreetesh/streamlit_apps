@@ -474,7 +474,7 @@ def website_result(request_data):
     llm = llm_utils.get_chat_model(False, False, openai_api_key=openai_api_key)
     
     client = get_shopify_chroma_instance(database=website_domain, host=chroma_host, port=chroma_port)
-    embedding_function = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    embedding_function = OpenAIEmbeddings(model="text-embedding-3-large",openai_api_key=openai_api_key)
     vectorstore = Chroma(client=client, collection_name=collection_name, embedding_function=embedding_function)
     
     retriever = vectorstore.as_retriever()
@@ -508,7 +508,6 @@ def website_result(request_data):
     conversation.extend(chat_history)
     conversation.append(("human", "{input}"))
     """
-    
     prompt = ChatPromptTemplate([
             ("system", system_prompt),
             *request_data["messages"][-6:],
