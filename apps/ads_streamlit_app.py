@@ -31,8 +31,11 @@ pg.run()
 with st.sidebar:
     with st.form("my_form0"):
         st.write(f"### Fill shop and collection info ")
-        shop_id = st.text_input(label="Enter Shop Id ",placeholder="Enter Shop Id")
-        collection_name = st.text_input(label="Enter Collection Name ",placeholder="Enter collection name")
+        dic_object=st.session_state.shop_collection
+        shop_id = dic_object["shop_id"]
+        collection_name = dic_object["collection_name"]
+        shop_id = st.text_input(label="Enter Shop Id ",placeholder="Enter Shop Id", value=f"{shop_id}")
+        collection_name = st.text_input(label="Enter Collection Name ",placeholder="Enter collection name",value=f"{collection_name}")
         submit_ads_listing = st.form_submit_button("Submit")
         if submit_ads_listing:
             st.session_state.shop_collection={}
