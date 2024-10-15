@@ -94,7 +94,7 @@ token = query_params.get('token')
 
 token_secret = st.secrets["shopify_credentials"]["jwt_secret"]
 decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
-page_title = f"I am Mira - you personal 24/7 Shopping Assistant for {decoded_token['shopName']}"
+page_title = f"I am Mira - your personal 24/7 Shopping Assistant for {decoded_token['shopName']}"
 st.set_page_config(page_title=page_title, page_icon=":flag-in:")
 
 hide_streamlit_style = """
@@ -106,7 +106,7 @@ footer {visibility: hidden;}
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-st.title("🔗 Shopify App")
+st.title("🔗 Mira - your personal 24/7 Shopping Assistant")
 # Initialize chat history
 if "messages" not in st.session_state:
     response = fetch_chat_history(api_url=st.secrets["shopify_credentials"]["chat_history_api"], token=token).json()
