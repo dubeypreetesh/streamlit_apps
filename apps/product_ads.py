@@ -47,8 +47,8 @@ def getDocuments():
         collection_name=None
         query_params = st._get_query_params()
         # token_dict = {}
-        # token_dict['access_token'] = "EAAOqlrfH0PQBOxUUUWqvDrZAPqbJfIa5M6YtDI61AJBJQrx9Ct5w60XoAnbZAIZA1vcRwIlmbXnJSJCRu63ZAgFCuVSENmFMc0sQkbVo3igmAuS9QHQ1ruATDfEImP6O5qzx43Yd3EAlAeqRgasRRFDi1KakEt55ZC4lg7G0sCGEQlk7ziIsiX4FoXWU4L3TwaZCM0M2Bbeh27SDKvLTQWiyAJXEpf1BIZD"
-        # token_dict['expires_at'] = "1728385200000"
+        # token_dict['access_token'] = "EAAOqlrfH0PQBO1Lh1oakChqwnkqMdtH0uFbZATMHztzuOK40ZBBhGSAEZCwAIZCZAewRjGEOLFy5ARSEirDNV2Wx1uc6uMrBbn3sYQjJVZBIzMt1vDMeglcTKmKvHYTtpMvCEerKVQ0tZCyeGkh2jVfnDLscIKfZAJhqMuD9k7iaXDWZBiA8bzZBlznEqEMDsX7Vl64GKHjBkMnzZAEpOmnZAtoMZBxes37jCj7PRCZB9V3VbV"
+        # token_dict['expires_at'] = "1729087200000"
         # st.session_state.token_collection = token_dict
         if not query_params:
             if 'shop_collection' not in st.session_state:
@@ -129,15 +129,15 @@ def js_redirect(url):
     
 # Function to display the detailed record
 def show_details(record_id):
-    if is_cloud: 
-        with st.sidebar:
-            st.title("fill your information")
-            openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
-            if not openai_api_key.startswith("sk-"):
-                st.warning("Please enter your OpenAI API key!", icon="⚠")
-    else:
-        with st.sidebar:
-            openai_api_key = st.secrets["openai"]["api_key"]
+    # if is_cloud: 
+    #     with st.sidebar:
+    #         st.title("fill your information")
+    #         openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
+    #         if not openai_api_key.startswith("sk-"):
+    #             st.warning("Please enter your OpenAI API key!", icon="⚠")
+    # else:
+    #     with st.sidebar:
+    #         openai_api_key = st.secrets["openai"]["api_key"]
             
     st.write(f"### Detailed View of Record ID {record_id}")
     selected_record = df[df['id'] == record_id].drop(columns=['Details'])
@@ -207,20 +207,22 @@ def show_details(record_id):
             with cola:
                 # st.write(selected_record)
                 if st.button("Ads Generation"):
-                    if openai_api_key.startswith("sk-"):
-                        ads(openai_api_key,access_token,expires_at,record_id, title, name, image_url)
-                    else:
-                        st.write("Enter OpenAI Api Key")
+                    ads(access_token,expires_at,record_id, title, name, image_url)
+                    # if not openai_api_key or openai_api_key.startswith("sk-"):
+                    #     ads(openai_api_key,access_token,expires_at,record_id, title, name, image_url)
+                    # else:
+                    #     st.write("Enter OpenAI Api Key")
                 if 'ads' in st.session_state:
                     ads_dic=st.session_state.ads
                     if ads_dic["item"]==record_id:
                         f"ads created for {ads_dic['item']}, {ads_dic['message']}"    
             with colb:
                 if st.button("Ads listing"):
-                    if openai_api_key.startswith("sk-"):
-                        adsList(record_id,access_token)
-                    else:
-                        st.write("Enter OpenAI Api Key")
+                    adsList(record_id,access_token)
+                    # if not openai_api_key or openai_api_key.startswith("sk-"):
+                    #     adsList(record_id,access_token)
+                    # else:
+                    #     st.write("Enter OpenAI Api Key")
     with colc:
             # Back button to return to the main page
         if st.button("Back"):
@@ -276,7 +278,7 @@ def adsList(record_id,access_token):
 
 
 @st.dialog("Ads Generation", width="large")
-def ads(openai_api_key,access_token,expires_at,record_id, title, description, image_url):
+def ads(access_token,expires_at,record_id, title, description, image_url):
     st.write(f"### Generate Ads for Record ID {record_id}")
     current_time = int(time() * 1000)
     if current_time > expires_at or not expires_at:
@@ -286,9 +288,18 @@ def ads(openai_api_key,access_token,expires_at,record_id, title, description, im
             st.session_state.image_data = {}
         if 'message_data' not in st.session_state:
             st.session_state.message_data = {}
+        valid_from=True
+        if is_cloud:
+            openai_api_key = st.text_input("Enter OpenAI API Key", type="password", key="openai_api_key")
+        else:
+            openai_api_key = st.secrets["openai"]["api_key"]
+        
+        if not openai_api_key or not openai_api_key.startswith("sk-"):
+            st.error("Please enter your OpenAI API Key", icon="⚠")
+            valid_from=False
             
         act_account_id = st.text_input("Enter account Id ")
-        valid_from=True
+        
         if not act_account_id:
             st.error("Please enter your account Id", icon="⚠")
             valid_from=False
