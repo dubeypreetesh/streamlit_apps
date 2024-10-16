@@ -289,10 +289,11 @@ def ads(access_token,expires_at,record_id, title, description, image_url):
         if 'message_data' not in st.session_state:
             st.session_state.message_data = {}
         valid_from=True
-        if is_cloud:
-            openai_api_key = st.text_input("Enter OpenAI API Key", type="password", key="openai_api_key")
-        else:
-            openai_api_key = st.secrets["openai"]["api_key"]
+        openai_api_key = st.text_input("Enter OpenAI API Key", type="password", key="openai_api_key")
+        # if is_cloud:
+        #     openai_api_key = st.text_input("Enter OpenAI API Key", type="password", key="openai_api_key")
+        # else:
+        #     openai_api_key = st.secrets["openai"]["api_key"]
         
         if not openai_api_key or not openai_api_key.startswith("sk-"):
             st.error("Please enter your OpenAI API Key", icon="⚠")
