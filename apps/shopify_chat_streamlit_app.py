@@ -8,7 +8,7 @@ import sys
 from dotenv import load_dotenv, find_dotenv
 import jwt
 import streamlit as st
-from proxy.copilot_proxy import CopilotProxy
+import requests
 
 _ = load_dotenv(find_dotenv())  # read local .env file
 
@@ -30,8 +30,7 @@ if is_cloud:
     os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["langsmith"]["LANGCHAIN_TRACING_V2"]
     os.environ["LANGCHAIN_API_KEY"] = st.secrets["langsmith"]["LANGCHAIN_API_KEY"]
 
-import requests
-from copilot import shopify_copilot
+from proxy.copilot_proxy import CopilotProxy
 
 def fetch_chat_history(api_url: str, token: str):
     # Fetch the chat history from your API
