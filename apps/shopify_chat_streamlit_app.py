@@ -58,32 +58,7 @@ def send_chat_messages(api_url: str, token: str, user_input: str, ai_message: st
         ]
     }      
     return requests.post(url=api_url, headers=headers, json=payload)
-"""
-def create_chat_messages(response: dict):
-    messages = response["data"]
-    messages_copy = []
-    for message in messages:
-        role = None
-        type = message["type"]
-        if type == "incoming":
-            role = "user"
-        elif type == "outgoing":
-            role = "assistant"
-        messages_copy.append({"role": role, "content": message["body"]})
-    return messages_copy
 
-def create_placeholder_messages(messages: list):
-    messages_copy = []
-    for message in messages:
-        role = message["role"]
-        if role == "user":
-            role = "human"
-        elif role == "assistant":
-            role = "ai"
-        if message["content"]:
-            messages_copy.append((role, message["content"]))
-    return messages_copy
-"""
 #App Code Starts here
 STANDARD_ERROR_MESSAGE = "We're sorry, but something didn’t go as planned. Please try again in a little while."
 # Fetch the query parameters
@@ -151,7 +126,6 @@ if user_input := st.chat_input("What's your query?"):
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
             ai_message = None
-            #create_placeholder_messages(st.session_state.messages)
             try:
                 copilot_proxy=CopilotProxy()
                 decoded_token = jwt.decode(token, st.secrets["shopify_credentials"]["jwt_secret"], algorithms=["HS256"])
