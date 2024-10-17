@@ -157,7 +157,7 @@ if user_input := st.chat_input("What's your query?"):
                 copilot_proxy=CopilotProxy()
                 decoded_token = jwt.decode(token, st.secrets["shopify_credentials"]["jwt_secret"], algorithms=["HS256"])
                 ai_message = copilot_proxy.chat_shopify_data(shop_id=decoded_token["shopId"], collection_name=decoded_token["collection_name"],
-                                                             question=user_input, chat_history=st.session_state.messages,checkout_data=st.session_state.checkout_data)
+                                                             question=user_input, chat_history=st.session_state.messages,checkout_data=st.session_state.checkout_data,user_id= decoded_token["customerId"])
             except Exception as e:
                 print(f"Error : {e}")
                 ai_message = STANDARD_ERROR_MESSAGE
