@@ -7,14 +7,7 @@ Created on 09-Sep-2024
 import os
 import sys
 import uuid
-
-from dotenv import load_dotenv, find_dotenv
-import requests
-from streamlit_javascript import st_javascript
-
 import streamlit as st
-
-_ = load_dotenv(find_dotenv())  # read local .env file
 
 _ = """
 ROOT_DIR=Path(__file__).parent.parent
@@ -48,24 +41,6 @@ def create_placeholder_messages(messages: list):
             messages_copy.append((role, message["content"]))
     return messages_copy
 
-
-#domain, email, name, human_message, ai_message, ai_error_messag
-def website_lead_save(api_url: str,x_api_key: str,session_id:str, name: str, email: str, human_message: str,ai_message:str,ai_error_message:str):
-    # Send the user message to your API and get the bot response
-    headers = {
-    "x-api-key": x_api_key,
-    "Content-Type": "application/json"
-    }
-    payload = {
-        "session_id": session_id,
-        "name":name,
-        "email":email,
-        "human_message":human_message,
-        "ai_message":ai_message,
-        "ai_error_message":ai_error_message
-    }
-    return requests.post(url=api_url,headers=headers, json=payload)
-
     
 page_title = f"OnGraph AI Assistant"
 st.set_page_config(page_title=page_title, page_icon=":flag-in:")
@@ -91,21 +66,19 @@ if 'session_id' not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])        
-domain = st_javascript("await fetch('').then(r => window.location.host)")
-if is_cloud: 
-    with st.sidebar:
-        st.title("fill your information")
+
+with st.sidebar:
+    st.title("fill your information")
+    if is_cloud: 
         openai_api_key = st.text_input("OpenAI API Key", type="password", key="openai_api_key")
-        user_name = st.text_input(label="Name", key="name", placeholder="Enter Your Name")
-        user_email = st.text_input(label="Email", key="email", placeholder="Enter Your Email")
         if not openai_api_key.startswith("sk-"):
             st.warning("Please enter your OpenAI API key!", icon="⚠")
-else:
-    with st.sidebar:
-        st.title("fill your information")
+    else:
         openai_api_key = st.secrets["openai"]["api_key"]
-        user_name = st.text_input(label="Name", key="name", placeholder="Enter Your Name")
-        user_email = st.text_input(label="Email", key="email", placeholder="Enter Your Email")
+        
+    user_name = st.text_input(label="Name", key="name", placeholder="Enter Your Name")
+    user_email = st.text_input(label="Email", key="email", placeholder="Enter Your Email")
+
     
 if user_input := st.chat_input("What's your query?"):
     if openai_api_key.startswith("sk-") and (user_name and user_name.strip()) and (user_email and user_email.strip()):
