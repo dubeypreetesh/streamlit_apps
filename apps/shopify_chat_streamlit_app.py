@@ -58,7 +58,7 @@ def send_chat_messages(api_url: str, token: str, user_input: str, ai_message: st
         ]
     }      
     return requests.post(url=api_url, headers=headers, json=payload)
-
+"""
 def create_chat_messages(response: dict):
     messages = response["data"]
     messages_copy = []
@@ -83,7 +83,7 @@ def create_placeholder_messages(messages: list):
         if message["content"]:
             messages_copy.append((role, message["content"]))
     return messages_copy
-
+"""
 #App Code Starts here
 STANDARD_ERROR_MESSAGE = "We're sorry, but something didn’t go as planned. Please try again in a little while."
 # Fetch the query parameters

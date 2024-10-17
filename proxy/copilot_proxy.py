@@ -181,3 +181,31 @@ class CopilotProxy(object):
         response = requests.post(url, json=payload)
         print(f"result:{response.text}")
         return response.text
+    
+    
+    """
+
+        *** api call for website copilot ***
+
+    """
+    
+    def website_lead_chat(self,x_api_key,session_id, name, email, collection_name,question):
+        api_url = f"{self.BASE_URL}/website/chat"
+        headers = {
+        "x-api-key": x_api_key,
+        "Content-Type": "application/json"
+        }
+        payload = {
+            "session_id": session_id,
+            "name":name,
+            "email":email,
+            "collection_name":collection_name,
+            "question":question
+        }
+        response=requests.post(url=api_url,headers=headers, json=payload)
+        data=response.json()
+        if response.status_code == 200:
+            return data['answer']
+        else:
+            return data['error']
+        

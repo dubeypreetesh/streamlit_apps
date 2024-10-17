@@ -14,7 +14,6 @@ from streamlit_javascript import st_javascript
 
 import streamlit as st
 
-
 _ = load_dotenv(find_dotenv())  # read local .env file
 
 _ = """
@@ -35,7 +34,7 @@ if is_cloud:
     os.environ["LANGCHAIN_TRACING_V2"] = st.secrets["langsmith"]["LANGCHAIN_TRACING_V2"]
     os.environ["LANGCHAIN_API_KEY"] = st.secrets["langsmith"]["LANGCHAIN_API_KEY"]
 
-from copilot import shopify_copilot
+from proxy.copilot_proxy import CopilotProxy
    
 def create_placeholder_messages(messages: list):
     messages_copy = []
@@ -48,6 +47,7 @@ def create_placeholder_messages(messages: list):
         if message["content"]:
             messages_copy.append((role, message["content"]))
     return messages_copy
+
 
 #domain, email, name, human_message, ai_message, ai_error_messag
 def website_lead_save(api_url: str,x_api_key: str,session_id:str, name: str, email: str, human_message: str,ai_message:str,ai_error_message:str):
@@ -117,20 +117,13 @@ if user_input := st.chat_input("What's your query?"):
         
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            ai_message = shopify_copilot.fetch_website_result(website_domain="ongraph.com", collection_name="collection",
-                                                              question=user_input, openai_api_key=openai_api_key,
-                                                              messages=create_placeholder_messages(st.session_state.messages),
-                                                              chroma_host=st.secrets["chroma_credentials"]["host"],
-                                                              chroma_port=st.secrets["chroma_credentials"]["port"])
+            copilot_proxy=CopilotProxy()
+            session_id=st.session_state['session_id']
+            ai_message=copilot_proxy.website_lead_chat(x_api_key=st.secrets["copilot"]["website_x_api_key"], session_id=session_id, name=user_name, email=user_email, collection_name="collection", question=user_input)
+            
             st.markdown(ai_message)
         
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": ai_message})
-        if ai_message:
-            try:
-                session_id=st.session_state['session_id']
-                website_lead_save(api_url=st.secrets["copilot"]["website_lead_save_api_url"],x_api_key=st.secrets["copilot"]["website_x_api_key"] ,session_id=session_id, name=user_name, email=user_email, human_message=user_input, ai_message=ai_message, ai_error_message=None)
-            except Exception as e:
-                pass
     else:
         st.write("Enter Name , Email, OpenAI Api Key")      
