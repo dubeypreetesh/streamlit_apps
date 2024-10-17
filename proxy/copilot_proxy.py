@@ -167,3 +167,16 @@ class CopilotProxy(object):
         
         response = requests.post(url, json=payload)
         return response.json()
+    
+    def chat_shopify_data(self,shop_id,collection_name,question,chat_history,checkout_data):
+        url = f"{self.BASE_URL}/shopify/chat"
+        payload = {
+            'shop_id': shop_id,
+            'collection_name': collection_name,
+            'question':question,
+            'chat_history':chat_history,
+            'checkout_data':checkout_data
+        }
+        response = requests.post(url, json=payload)
+        print(f"result:{response.text}")
+        return response.text
