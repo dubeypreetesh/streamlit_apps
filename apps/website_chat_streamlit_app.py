@@ -29,19 +29,6 @@ if is_cloud:
 
 from proxy.copilot_proxy import CopilotProxy
    
-def create_placeholder_messages(messages: list):
-    messages_copy = []
-    for message in messages:
-        role = message["role"]
-        if role == "user":
-            role = "human"
-        elif role == "assistant":
-            role = "ai"
-        if message["content"]:
-            messages_copy.append((role, message["content"]))
-    return messages_copy
-
-    
 page_title = f"OnGraph AI Assistant"
 st.set_page_config(page_title=page_title, page_icon=":flag-in:")
 
