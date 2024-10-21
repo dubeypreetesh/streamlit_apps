@@ -63,12 +63,12 @@ with st.sidebar:
     else:
         openai_api_key = st.secrets["openai"]["api_key"]
         
-    user_name = st.text_input(label="Name", key="name", placeholder="Enter Your Name")
-    user_email = st.text_input(label="Email", key="email", placeholder="Enter Your Email")
+    #user_name = st.text_input(label="Name", key="name", placeholder="Enter Your Name")
+    #user_email = st.text_input(label="Email", key="email", placeholder="Enter Your Email")
 
     
 if user_input := st.chat_input("What's your query?"):
-    if openai_api_key.startswith("sk-") and (user_name and user_name.strip()) and (user_email and user_email.strip()):
+    if openai_api_key.startswith("sk-"): #and (user_name and user_name.strip()) and (user_email and user_email.strip()):
         # Display user message in chat message container
         with st.chat_message("user"):
             st.markdown(user_input)
@@ -79,7 +79,7 @@ if user_input := st.chat_input("What's your query?"):
         with st.chat_message("assistant"):
             copilot_proxy=CopilotProxy()
             session_id=st.session_state['session_id']
-            ai_message=copilot_proxy.website_lead_chat(x_api_key=st.secrets["copilot"]["website_x_api_key"], session_id=session_id, name=user_name, email=user_email, collection_name="collection", question=user_input)
+            ai_message=copilot_proxy.website_lead_chat(x_api_key=st.secrets["copilot"]["website_x_api_key"], session_id=session_id, collection_name="collection", question=user_input)
             
             st.markdown(ai_message)
         

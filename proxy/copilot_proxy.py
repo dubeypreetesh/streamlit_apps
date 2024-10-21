@@ -189,16 +189,14 @@ class CopilotProxy(object):
 
     """
     
-    def website_lead_chat(self,x_api_key,session_id, name, email, collection_name,question):
+    def website_lead_chat(self,x_api_key,session_id, collection_name,question):
         api_url = f"{self.BASE_URL}/websites/chat"
         headers = {
         "x-api-key": x_api_key,
         "Content-Type": "application/json"
         }
         payload = {
-            "session_id": session_id,
-            "name":name,
-            "email":email,
+            "session_id": session_id,            
             "collection_name":collection_name,
             "question":question
         }
