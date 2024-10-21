@@ -66,6 +66,9 @@ query_params = st.query_params
 
 # Access a specific query parameter
 token = query_params.get('token')
+if not token:
+    st.warning("Required token is missing from the URL. Please ensure the correct URL is used.")
+    st.stop()
 
 token_secret = st.secrets["shopify_credentials"]["jwt_secret"]
 decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
