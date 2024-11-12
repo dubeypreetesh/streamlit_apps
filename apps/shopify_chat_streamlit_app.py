@@ -101,8 +101,8 @@ else:
 # Initialize chat history
 if "messages" not in st.session_state:
     fetch_chat_history_api_url = st.secrets["shopify_credentials"]["chat_history_api"]
-    if env == "development":
-        fetch_chat_history_api_url = st.secrets["shopify_credentials_development"]["chat_history_api_development"]
+    if env == "staging":
+        fetch_chat_history_api_url = st.secrets["shopify_credentials_staging"]["chat_history_api_staging"]
     response = fetch_chat_history(api_url=fetch_chat_history_api_url, token=token).json()
     if response["data"]:
         st.session_state.messages = response["data"]#create_chat_messages(response)
@@ -152,8 +152,8 @@ if user_input := st.chat_input("What's your query?"):
         st.session_state.messages.append({"type": "outgoing", "body": ai_message})    
         try:
             send_chat_messages_api_url = st.secrets["shopify_credentials"]["send_message_api"]
-            if env == "development":
-                send_chat_messages_api_url = st.secrets["shopify_credentials_development"]["send_message_api_development"]
+            if env == "staging":
+                send_chat_messages_api_url = st.secrets["shopify_credentials_staging"]["send_message_api_staging"]
             send_chat_messages(api_url=send_chat_messages_api_url, token=token, user_input=user_input, ai_message=ai_message)
         except Exception as e:
             print(f"Error : {e}")
