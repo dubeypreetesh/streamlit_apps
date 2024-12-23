@@ -70,7 +70,7 @@ if not token:
     st.warning("Required token is missing from the URL. Please ensure the correct URL is used.")
     st.stop()
 
-token_secret = st.secrets["shopify_credentials"]["jwt_secret"]
+token_secret = st.secrets["shopify"]["jwt_secret"]
 decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
 page_title = f"I am Mira - your personal 24/7 Shopping Assistant for {decoded_token['shopName']}"
 st.set_page_config(page_title=page_title, page_icon=":flag-in:")
@@ -91,10 +91,19 @@ footer {visibility: hidden;}
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+env = None
+if 'env' not in decoded_token.keys():
+    env = "production"
+else:
+    env = decoded_token['env']
+    
 #st.title(title)
 # Initialize chat history
 if "messages" not in st.session_state:
-    response = fetch_chat_history(api_url=st.secrets["shopify_credentials"]["chat_history_api"], token=token).json()
+    fetch_chat_history_api_url = st.secrets["shopify_credentials"]["chat_history_api"]
+    if env == "staging":
+        fetch_chat_history_api_url = st.secrets["shopify_credentials_staging"]["chat_history_api"]
+    response = fetch_chat_history(api_url=fetch_chat_history_api_url, token=token).json()
     if response["data"]:
         st.session_state.messages = response["data"]#create_chat_messages(response)
     else:
@@ -131,7 +140,7 @@ if user_input := st.chat_input("What's your query?"):
             ai_message = None
             try:
                 copilot_proxy=CopilotProxy()
-                decoded_token = jwt.decode(token, st.secrets["shopify_credentials"]["jwt_secret"], algorithms=["HS256"])
+                decoded_token = jwt.decode(token, token_secret, algorithms=["HS256"])
                 ai_message = copilot_proxy.chat_shopify_data(shop_id=decoded_token["shopId"], collection_name=decoded_token["collection_name"],
                                                              question=user_input, chat_history=st.session_state.messages,checkout_data=st.session_state.checkout_data,user_id= decoded_token["customerId"])
             except Exception as e:
@@ -142,7 +151,10 @@ if user_input := st.chat_input("What's your query?"):
         # Add assistant response to chat history
         st.session_state.messages.append({"type": "outgoing", "body": ai_message})    
         try:
-            send_chat_messages(api_url=st.secrets["shopify_credentials"]["send_message_api"], token=token, user_input=user_input, ai_message=ai_message)
+            send_chat_messages_api_url = st.secrets["shopify_credentials"]["send_message_api"]
+            if env == "staging":
+                send_chat_messages_api_url = st.secrets["shopify_credentials_staging"]["send_message_api"]
+            send_chat_messages(api_url=send_chat_messages_api_url, token=token, user_input=user_input, ai_message=ai_message)
         except Exception as e:
             print(f"Error : {e}")
         
