@@ -18,7 +18,7 @@ class CopilotProxy(object):
     """
     
     def validate_token_and_account(self, access_token, app_id, app_secret, act_account_id):
-        url = f"{self.BASE_URL}/fb-ads/validate/account/token"
+        url = f"{self.BASE_URL}/social/fb-ads/validate/account/token"
         payload = {
             'access_token': access_token,
             'app_id': app_id,
@@ -34,7 +34,7 @@ class CopilotProxy(object):
             return response.json()
         
     def validate_token(self, access_token, app_id, app_secret):
-        url = f"{self.BASE_URL}/fb-ads/validate/token"
+        url = f"{self.BASE_URL}/social/fb-ads/validate/token"
         payload = {
             'access_token': access_token,
             'app_id': app_id,
@@ -46,7 +46,7 @@ class CopilotProxy(object):
     def create_fb_ads(self, access_token, app_id, app_secret, act_account_id, api_key,
                       campaign_id, campaign_name, adset_id, adset_name, adset_bid_amount, adset_daily_budget, creative_id, adcreative_name,
                       adcreative_image_hash, adcreative_message, ad_name):
-        url = f"{self.BASE_URL}/fb-ads/create"
+        url = f"{self.BASE_URL}/social/fb-ads/create"
         payload = {
             'access_token': access_token,
             'app_id': app_id,
@@ -70,7 +70,7 @@ class CopilotProxy(object):
         return response.json()
         
     def get_fb_ads(self, access_token, app_id, app_secret, act_account_id, limit):
-        url = f"{self.BASE_URL}/fb-ads/get"
+        url = f"{self.BASE_URL}/social/fb-ads/get"
         payload = {
             'access_token': access_token,
             'app_id': app_id,
@@ -83,7 +83,7 @@ class CopilotProxy(object):
         return response.json()
         
     def create_ad_message(self, title, description, api_key):
-        url = f"{self.BASE_URL}/fb-ads/create/message"
+        url = f"{self.BASE_URL}/social/fb-ads/create/message"
         payload = {
             'title': title,
             'description': description,
@@ -94,7 +94,7 @@ class CopilotProxy(object):
         return response.json()
     
     def get_account_metrics(self, access_token, app_id, app_secret, act_account_id):
-        url = f"{self.BASE_URL}/fb-ads/account/metrics"
+        url = f"{self.BASE_URL}/social/fb-ads/account/metrics"
         payload = {
             'access_token': access_token,
             'app_id': app_id,
@@ -106,7 +106,7 @@ class CopilotProxy(object):
         return response.json()
         
     def get_campain_metrics(self, access_token, app_id, app_secret, campain_id):
-        url = f"{self.BASE_URL}/fb-ads/campain/metrics"
+        url = f"{self.BASE_URL}/social/fb-ads/campain/metrics"
         payload = {
             'access_token': access_token,
             'app_id': app_id,
@@ -118,7 +118,7 @@ class CopilotProxy(object):
         return response.json()
         
     def get_adset_metrics(self, access_token, app_id, app_secret, adset_id):
-        url = f"{self.BASE_URL}/fb-ads/adset/metrics"
+        url = f"{self.BASE_URL}/social/fb-ads/adset/metrics"
         payload = {
             'access_token': access_token,
             'app_id': app_id,
@@ -130,7 +130,7 @@ class CopilotProxy(object):
         return response.json()
         
     def get_ads_metrics(self, access_token, app_id, app_secret, ads_id):
-        url = f"{self.BASE_URL}/fb-ads/metrics"
+        url = f"{self.BASE_URL}/social/fb-ads/metrics"
         payload = {
             'access_token': access_token,
             'app_id': app_id,
@@ -142,7 +142,7 @@ class CopilotProxy(object):
         return response.json()
         
     def get_ads_details(self, access_token, app_id, app_secret, ads_id):
-        url = f"{self.BASE_URL}/fb-ads/details"
+        url = f"{self.BASE_URL}/social/fb-ads/details"
         payload = {
             'access_token': access_token,
             'app_id': app_id,
