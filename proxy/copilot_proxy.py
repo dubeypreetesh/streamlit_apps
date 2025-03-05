@@ -179,8 +179,11 @@ class CopilotProxy(object):
             'user_id':user_id
         }
         response = requests.post(url, json=payload)
-        print(f"result:{response.text}")
-        return response.text
+        data=response.json()
+        if response.status_code == 200:
+            return data['answer']
+        else:
+            return data['error']
     
     
     """
